@@ -1,0 +1,30 @@
+!SESSION 2026-01-20 22:52:39.502 -----------------------------------------------
+eclipse.buildId=4.36.0.20250605-1300
+java.version=21.0.8
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_CA
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os linux -ws gtk -arch x86_64 -product org.eclipse.epp.package.java.product
+
+!ENTRY ch.qos.logback.classic 1 0 2026-01-20 22:52:44.662
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-01-20 22:53:02.390
+!MESSAGE Logback config file: /home/navin/programming/CP372-31-Assignment/.metadata/.plugins/org.eclipse.m2e.logback/logback.2.7.100.20250418-1315.xml
+
+!ENTRY org.eclipse.ui 2 0 2026-01-20 22:53:03.148
+!MESSAGE Warnings while parsing the images from the 'org.eclipse.ui.commandImages' extension point.
+!SUBENTRY 1 org.eclipse.ui 2 0 2026-01-20 22:53:03.148
+!MESSAGE Cannot bind to an undefined command: plug-in='com.genuitec.eclipse.theming.ui', id='com.genuitec.myeclipse.help.darktheme.commandid'
+
+!ENTRY com.genuitec.eclipse.theming.ui 1 0 2026-01-20 22:53:03.688
+!MESSAGE A DevStyle Theme is being activated on this workspace; preparing colors and configuration
+
+!ENTRY com.genuitec.eclipse.theming.ui 1 0 2026-01-20 22:53:03.708
+!MESSAGE DevStyle has archived current color configurations to alternate preferences - will be restored when switching out of the DevStyle Theme
+
+!ENTRY com.genuitec.eclipse.codetogether.ui 1 0 2026-01-20 22:53:12.878
+!MESSAGE No proxy data found for url: https://live.codetogether.io/ct-url
+
+!ENTRY com.genuitec.eclipse.theming.ui 4 0 2026-01-20 22:53:13.419
+!MESSAGE Linux display manager Wayland detected. Set WEBKIT_DISABLE_COMPOSITING_MODE=1 as an environment variable to fix Browser usage, such as showing JavaDoc information.
