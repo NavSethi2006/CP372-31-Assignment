@@ -123,9 +123,10 @@ public class Board {
 			pins.clear();
 			return "OK CLEAR_COMPLETE";
 		} finally {
-			lock.unlock()
-			
+			lock.unlock();
 		}
 	}
+	
+	
 	
 }
