@@ -27,6 +27,16 @@ public class Board {
 		pins = new HashSet<Pin>();
 	}
 	
+	// helper function
+    private boolean isNotePinned(Note note) {
+        for (Pin pin : pins) {
+            if (pin.isInsideNote(note)) {
+                return true;
+            }
+        }
+        return false;
+    }
+	
 	public String POSTnote(int x, int y, String Color, String message) {
 		lock.lock();
 		try {
@@ -94,11 +104,26 @@ public class Board {
 		try {
 			List<Note> notestokeep = new ArrayList<Note>();
 			for(Note note : notes ) {
-				
+				if(isNotePinned(note)) {
+					notestokeep.add(note);
+				}
 			}
-				 
-			
+			notes.clear();
+			notes.addAll(notestokeep);
+			return "OK SHAKE_COMPLETE";
 		}finally {
+			lock.unlock();
+		}
+	}
+	
+	public String clear() {
+		lock.lock();
+		try {
+			notes.clear();
+			pins.clear();
+			return "OK CLEAR_COMPLETE";
+		} finally {
+			lock.unlock()
 			
 		}
 	}
