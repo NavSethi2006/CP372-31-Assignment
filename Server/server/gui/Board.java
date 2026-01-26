@@ -1,5 +1,6 @@
 package server.gui;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +28,7 @@ public class Board {
 		pins = new HashSet<Pin>();
 	}
 	
+
 	// helper function
     private boolean isNotePinned(Note note) {
         for (Pin pin : pins) {
@@ -91,7 +93,7 @@ public class Board {
 			pins.remove(pintoremove);
 			return "OK PIN_REMOVED";
 		} else {
-			return "ERROR PIN_NOT_FOUND No pin at this location exists";
+			return "[-]ERROR PIN_NOT_FOUND No pin at this location exists";
 		}
 		
 		} finally {
@@ -127,6 +129,51 @@ public class Board {
 		}
 	}
 	
+	public String getNotes(Integer containsX, Integer containsY, String refersTo) {
+		lock.lock();
+		try {
+			List<Note> matchingNotes = new ArrayList<Note>();
+			for(Note note : notes) {
+				boolean matches = true;
+				if(containsX != null && containsY != null && !note.containsPoint(containsX, containsY))matches = false;
+				if(refersTo != null && !note.getMessage().toLowerCase().contains(refersTo.toLowerCase()))matches = false;
+				if(matches) matchingNotes.add(note);
+			}
+			
+			StringBuilder res = new StringBuilder();
+			res.append("OK ").append(matchingNotes.size());
+			for(Note note: matchingNotes) {
+				res.append("\n");
+				res.append("NOTE ").append(note.toProtocolString(isNotePinned(note)));
+			}
+			
+			return res.toString();
+		} finally {
+			
+			lock.unlock();
+		}
+	}
+	
+	public String getPins() {
+		lock.lock();
+		try {
+			StringBuilder res = new StringBuilder();
+			res.append("OK ").append(pins.size());
+			for(Pin pin: pins) {
+				res.append("\n");
+				res.append(pin.toProtocol().toString());
+			}
+			
+			return res.toString();
+		} finally {
+			lock.unlock();
+		}
+	}
+	
+	public String getConfigString() {
+		return String.format("%d, %d, %d, %s", boardWidth, boardHeight, noteWidth, noteHeight, 
+							String.join(" ", validColors));
+	}
 	
 	
 }

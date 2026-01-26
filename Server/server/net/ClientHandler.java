@@ -51,9 +51,9 @@ public class ClientHandler extends Thread {
 	// this is the only thing being ran and will continue to be ran in order to keep connection,
 	// put all client communication related external function in here
 	public void run() {
-		
 		try {
-
+			
+			
 			String command;
 			while((command = in.readLine()) != null) {
 
