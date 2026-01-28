@@ -23,7 +23,14 @@ public class Board {
 		this.boardHeight = boardHeight;
 		this.noteWidth = noteWidth;
 		this.noteHeight = noteHeight;
+		
+		// valid colors for now
 		validColors = new ArrayList<String>();
+		validColors.add("Red");
+		validColors.add("Blue");
+		validColors.add("Green");
+		validColors.add("Yellow");
+		
 		notes = new ArrayList<Note>();
 		pins = new HashSet<Pin>();
 	}
@@ -171,7 +178,7 @@ public class Board {
 	}
 	
 	public String getConfigString() {
-		return String.format("%d, %d, %d, %s", boardWidth, boardHeight, noteWidth, noteHeight, 
+		return String.format("%d, %d, %d, %d, %s", boardWidth, boardHeight, noteWidth, noteHeight, 
 							String.join(" ", validColors));
 	}
 	

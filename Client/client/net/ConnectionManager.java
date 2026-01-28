@@ -52,8 +52,6 @@ public class ConnectionManager extends Thread{
 	public void run() {
 		try {
 			
-			
-			
 			String recv;
 			while(connectionStatus) {	
 					recv = dis.readUTF();	
