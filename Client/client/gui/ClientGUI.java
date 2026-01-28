@@ -118,6 +118,7 @@ public class ClientGUI {
 			IPNumber = ServerIP.getText();
 			PortNumber = Integer.parseInt(ServerPort.getText().replaceAll(" ", ""));
 			alias = Alias.getText();
+			System.out.println(IPNumber+PortNumber+alias);
 			
 			conn.connectToServer(IPNumber, PortNumber, alias);
 			conn.start();
