@@ -71,6 +71,7 @@ public class Server {
 			while(ServerIsAlive) {
 				Socket clientSocket = server.accept();
 				clientsockets.add(clientSocket);
+				System.out.println("Accepted client from IP : "+ clientSocket.getInetAddress().getHostAddress()+":"+clientSocket.getPort());
 				ClientHandler client = new ClientHandler(clientSocket, tempboard);
 				admin.update_clients(clientsockets);
 				client.start();

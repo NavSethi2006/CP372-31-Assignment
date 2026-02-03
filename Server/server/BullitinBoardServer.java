@@ -28,8 +28,8 @@ public class BullitinBoardServer {
 	public static void main(String []args) {
 		
 		int port = 8080;
-		int boardwidth = 500;
-		int boardheight = 300;
+		int boardwidth = 800;
+		int boardheight = 600;
 		int notewidth = 50;
 		int noteheight = 50;
 		if(args.length != 0) {

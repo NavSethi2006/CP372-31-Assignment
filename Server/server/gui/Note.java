@@ -1,6 +1,5 @@
 package server.gui;
 
-import java.awt.Color;
 import java.util.Objects;
 
 public class Note {

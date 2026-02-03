@@ -13,9 +13,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 import server.gui.Board;
-
 
 // this class is a client in a current connection to the server
 public class ClientHandler extends Thread {
@@ -24,61 +24,93 @@ public class ClientHandler extends Thread {
 	private PrintWriter out;
 	private BufferedReader in;
 	private Board board;
+	private String handshake;
+	private String IP;
 	
 	public ClientHandler(Socket socket, Board board) {
 		this.socket = socket;
 		this.board = board;
+		IP = socket.getInetAddress().getHostAddress();
+		
 		try {
 			out = new PrintWriter(socket.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-		} catch (IOException e) {
 			
-		}
-	}
-	
-	public void post(String postmsg) {
-		out.print(postmsg);
-	}
-	
-	public String get() {
-		String line = "";
-		try {
-			line = in.readLine();
 		} catch (IOException e) {
-			e.printStackTrace();
+
 		}
 		
-		return line;
+	}
+	
+	public void send(String postmsg) {
+		out.write(postmsg);
+		out.flush();
+	}
+	
+	public String recv() {
+		try {
+			String retstring = new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			return retstring;
+		} catch (IOException e) {
+			String retstring = new String("ERROR There was an error in reciving a message from the server.");
+			return retstring;
+		}
 	}
 	
 	// this is the only thing being ran and will continue to be ran in order to keep connection,
 	// put all client communication related external function in here
-	String handshake = board.getConfigString();
 	public void run() {
-		try {
-			post(handshake);
-			
-			String command;
-			while((command = in.readLine()) != null) {
+		
+		String handshake = board.getConfigString();
 
-			}
-		} catch (IOException e) {
-			System.err.print("Error in reciving message");
+		out.println(handshake);
+		
+		String command;
+		while(socket.isConnected()) {
+			command = recv();
+			processCommand(command);
 		}
 	}
 	
 	private void processCommand(String command) {
 		String[] parts = command.split(" ", 2);
 		String cmd = parts[0].toUpperCase();
+		int x;
+		int y;
+		String returnMessage;
 		
 		switch(cmd) {
-		case "POST":
+		case "NOTE":
+			x = Integer.parseInt(parts[1]);
+			y = Integer.parseInt(parts[2]);
+			String color = parts[3];
+			String message = parts[4];
+			returnMessage = board.POSTnote(x, y, color, message);
+			send(returnMessage);
 			break;
 		case "PIN":
+			x = Integer.parseInt(parts[1]);
+			y = Integer.parseInt(parts[2]);
+			returnMessage = board.addPin(x, y);
+			send(returnMessage);
+			break;
+		case "GET":
+			String getmsg = "";
+			if(parts[1] == "NOTE") {
+				
+			}
+			send(getmsg);
+			break;
+		case "DISCONNECT":
+			try {
+				socket.close();
+				System.out.println(parts[1]+" has disconnected from IP : "+ IP + "\nThread "+threadId());
+				interrupt();
+			} catch (IOException e) {
+				System.out.println("Failed to disconnect user : " +IP);
+			}
 			break;
 		}
-		
 	}
 
 }

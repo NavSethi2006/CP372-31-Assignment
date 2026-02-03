@@ -1,6 +1,5 @@
 package server.gui;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -136,6 +135,33 @@ public class Board {
 		}
 	}
 	
+	public String getAllNotes() {
+		lock.lock();
+		try {
+			StringBuilder allNotesResponse = new StringBuilder();
+			for(Note note : notes) {
+				allNotesResponse.append(note.toProtocolString(isNotePinned(note)));
+				allNotesResponse.append("\n");
+			}
+			return allNotesResponse.toString();
+		} finally {
+			lock.unlock();
+		}
+	}
+	public String getAllPins() {
+		lock.lock();
+		try {
+			StringBuilder allPinsResponse = new StringBuilder();
+			for(Pin pin: pins) {
+				allPinsResponse.append(pin.toProtocol());
+				allPinsResponse.append("\n");
+			}
+			return allPinsResponse.toString();
+		} finally {
+			lock.unlock();
+		}
+	}
+	
 	public String getNotes(Integer containsX, Integer containsY, String refersTo) {
 		lock.lock();
 		try {
@@ -178,7 +204,7 @@ public class Board {
 	}
 	
 	public String getConfigString() {
-		return String.format("%d, %d, %d, %d, %s", boardWidth, boardHeight, noteWidth, noteHeight, 
+		return String.format("%d %d %d %d %s", boardWidth, boardHeight, noteWidth, noteHeight, 
 							String.join(" ", validColors));
 	}
 	

@@ -58,15 +58,9 @@
           <tags>persp.perspSC:org.eclipse.jdt.ui.JavaBrowsingPerspective</tags>
           <tags>persp.perspSC:org.eclipse.debug.ui.DebugPerspective</tags>
           <tags>persp.showIn:com.genuitec.eclipse.meexplorer.MENavigator</tags>
-          <tags>persp.editorOnboardingImageUri:platform:/plugin/org.eclipse.jdt.ui/$nl$/icons/full/onboarding_jperspective.svg</tags>
-          <tags>persp.editorOnboardingText:Open a file or drop files here to open them.</tags>
           <tags>persp.showIn:org.eclipse.jdt.ui.PackageExplorer</tags>
           <tags>persp.showIn:org.eclipse.team.ui.GenericHistoryView</tags>
           <tags>persp.showIn:org.eclipse.ui.navigator.ProjectExplorer</tags>
-          <tags>persp.editorOnboardingCommand:Find Actions$$$Ctrl+3</tags>
-          <tags>persp.editorOnboardingCommand:Show Key Assist$$$Shift+Ctrl+L</tags>
-          <tags>persp.editorOnboardingCommand:New$$$Ctrl+N</tags>
-          <tags>persp.editorOnboardingCommand:Open Type$$$Shift+Ctrl+T</tags>
           <tags>persp.viewSC:org.eclipse.mylyn.tasks.ui.views.tasks</tags>
           <tags>persp.newWizSC:org.eclipse.mylyn.tasks.ui.wizards.new.repository.task</tags>
           <tags>persp.actionSet:org.eclipse.debug.ui.breakpointActionSet</tags>
@@ -81,6 +75,12 @@
           <tags>persp.viewSC:org.eclipse.tm.terminal.view.ui.TerminalsView</tags>
           <tags>persp.showIn:org.eclipse.tm.terminal.view.ui.TerminalsView</tags>
           <tags>persp.viewSC:org.eclipse.ant.ui.views.AntView</tags>
+          <tags>persp.editorOnboardingImageUri:platform:/plugin/org.eclipse.jdt.ui/$nl$/icons/full/onboarding_jperspective.svg</tags>
+          <tags>persp.editorOnboardingText:Open a file or drop files here to open them.</tags>
+          <tags>persp.editorOnboardingCommand:Find Actions$$$Ctrl+3</tags>
+          <tags>persp.editorOnboardingCommand:Show Key Assist$$$Shift+Ctrl+L</tags>
+          <tags>persp.editorOnboardingCommand:New$$$Ctrl+N</tags>
+          <tags>persp.editorOnboardingCommand:Open Type$$$Shift+Ctrl+T</tags>
           <children xsi:type="basic:PartSashContainer" xmi:id="_sbp1kfZ8EfCD---1YlPUwA" selectedElement="_sbp1kvZ8EfCD---1YlPUwA" horizontal="true">
             <children xsi:type="basic:PartSashContainer" xmi:id="_sbp1kvZ8EfCD---1YlPUwA" containerData="2500" selectedElement="_sbp1k_Z8EfCD---1YlPUwA">
               <children xsi:type="basic:PartStack" xmi:id="_sbp1k_Z8EfCD---1YlPUwA" elementId="left" containerData="6000" selectedElement="_sbp1lPZ8EfCD---1YlPUwA">
@@ -390,13 +390,13 @@
       <tags>categoryTag:CodeTogether</tags>
     </sharedElements>
     <trimBars xmi:id="_r2Ts0fZ8EfCD---1YlPUwA" elementId="org.eclipse.ui.main.toolbar" contributorURI="platform:/plugin/org.eclipse.platform">
-      <children xsi:type="menu:ToolBar" xmi:id="_sSsG0PZ8EfCD---1YlPUwA">
+      <children xsi:type="menu:ToolBar" xmi:id="_sSsG0PZ8EfCD---1YlPUwA" visible="false">
         <tags>toolbarSeparator</tags>
         <tags>Draggable</tags>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_sSst4PZ8EfCD---1YlPUwA" elementId="org.eclipse.ui.workbench.file">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_sSy0gPZ8EfCD---1YlPUwA" elementId="print" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.svg" tooltip="Print" command="_r3IMUfZ8EfCD---1YlPUwA"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_ylrOsPyZEfC_AOeaWLf5wQ" elementId="print" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.svg" tooltip="Print" command="_r3IMUfZ8EfCD---1YlPUwA"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_sStU8PZ8EfCD---1YlPUwA" elementId="group.edit" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -404,8 +404,8 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_sStU8vZ8EfCD---1YlPUwA" elementId="org.eclipse.ui.workbench.edit">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_sSzbkPZ8EfCD---1YlPUwA" elementId="undo" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/undo_edit.svg" tooltip="Undo" enabled="false" command="_r3DTvvZ8EfCD---1YlPUwA"/>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_sS0CoPZ8EfCD---1YlPUwA" elementId="redo" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/redo_edit.svg" tooltip="Redo" enabled="false" command="_r3FI7vZ8EfCD---1YlPUwA"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_ylsc0PyZEfC_AOeaWLf5wQ" elementId="undo" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/undo_edit.svg" tooltip="Undo" enabled="false" command="_r3DTvvZ8EfCD---1YlPUwA"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_yltD4PyZEfC_AOeaWLf5wQ" elementId="redo" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/redo_edit.svg" tooltip="Redo" enabled="false" command="_r3FI7vZ8EfCD---1YlPUwA"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_sStU8_Z8EfCD---1YlPUwA" elementId="additions" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -426,7 +426,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_sSt8APZ8EfCD---1YlPUwA" elementId="org.eclipse.ui.workbench.navigate">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_sS0psPZ8EfCD---1YlPUwA" elementId="org.eclipse.ui.window.pinEditor" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.svg" tooltip="Pin Editor" enabled="false" type="Check" command="_r3HlNPZ8EfCD---1YlPUwA"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_ylu5EPyZEfC_AOeaWLf5wQ" elementId="org.eclipse.ui.window.pinEditor" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.svg" tooltip="Pin Editor" enabled="false" type="Check" command="_r3HlNPZ8EfCD---1YlPUwA"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_sSt8AfZ8EfCD---1YlPUwA" elementId="group.editor" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -438,6 +438,10 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_sSujEPZ8EfCD---1YlPUwA" elementId="org.eclipse.ui.workbench.help" visible="false">
         <tags>Draggable</tags>
+      </children>
+      <children xsi:type="menu:ToolBar" xmi:id="_l33UwPyYEfCwRpMfRGZKXQ" elementId="group.file" toBeRendered="false">
+        <tags>toolbarSeparator</tags>
+        <children xsi:type="menu:ToolBarSeparator" xmi:id="_l33UwfyYEfCwRpMfRGZKXQ" elementId="group.file" toBeRendered="false"/>
       </children>
       <children xsi:type="menu:ToolControl" xmi:id="_sXnqIPZ8EfCD---1YlPUwA" elementId="PerspectiveSpacer" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.renderers.swt/org.eclipse.e4.ui.workbench.renderers.swt.LayoutModifierToolControl">
         <tags>stretch</tags>
