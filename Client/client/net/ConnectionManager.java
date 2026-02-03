@@ -57,10 +57,7 @@ public class ConnectionManager extends Thread{
 		
 		return getline;
 	}
-	
-	public List<Note> parseNotes(String response) {
-		List 
-	}
+
 	
 	
 	@Override

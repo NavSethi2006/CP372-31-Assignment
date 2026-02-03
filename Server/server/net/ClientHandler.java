@@ -37,7 +37,7 @@ public class ClientHandler extends Thread {
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			
 		} catch (IOException e) {
-
+ 
 		}
 		
 	}
@@ -67,8 +67,15 @@ public class ClientHandler extends Thread {
 		
 		String command;
 		while(socket.isConnected()) {
-			command = recv();
-			processCommand(command);
+			try {
+				command = in.readLine();
+				System.out.println(command);
+				processCommand(command);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
 	}
 	
@@ -95,11 +102,10 @@ public class ClientHandler extends Thread {
 			send(returnMessage);
 			break;
 		case "GET":
-			String getmsg = "";
-			if(parts[1] == "NOTE") {
-				
-			}
-			send(getmsg);
+			StringBuilder getmsg = new StringBuilder();
+			getmsg.append(board.getAllNotes());
+			getmsg.append(board.getAllPins());
+			send(getmsg.toString());
 			break;
 		case "DISCONNECT":
 			try {

@@ -133,6 +133,7 @@ public class ClientGUI {
 		ServerAddress.setBounds(0,0,300,50);
 			
 		BulletinPanel.add(ServerAddress);
+		addListener();
 		
 	}
 	
@@ -180,9 +181,8 @@ public class ClientGUI {
     private void refreshBoard() {
     	StatusPanel.log("Refreshing Board....");
     	
-    	String getNotes = conn.get("GET");
-    	List<Note> notes;
-    	
+    	String notesResponse = conn.get("GET");
+    	System.out.println(notesResponse);
     }
     
     private void showPinDialog(boolean isPin) {
@@ -238,13 +238,14 @@ public class ClientGUI {
     	ControlPanel.getPostButton().addActionListener(e->showPostDialog());
     	ControlPanel.getPinButton().addActionListener(e->showPinDialog(true));
     	ControlPanel.getUnpinButton().addActionListener(e->showPinDialog(false));
+    	ControlPanel.getGetButton().addActionListener(e->refreshBoard());
     	ControlPanel.getShakeButton().addActionListener(e-> {
     		conn.send("SHAKE");
     	});
     	ControlPanel.getClearButton().addActionListener(e-> {
     		conn.send("CLEAR");
     	});
-    	ControlPanel.getRefreshButton().addActionListener(e->);
+    	ControlPanel.getRefreshButton().addActionListener(e->refreshBoard());
     }
 	
 	private class getInfo implements ActionListener {
