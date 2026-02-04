@@ -11,6 +11,7 @@ public class Note {
 	private final int width, height;
 	
 	public Color parseColor(String colorName) {
+		if (colorName == null) return Color.LIGHT_GRAY;
 		switch(colorName.toLowerCase()) {
 		case "red": return Color.RED;
 		case "green": return Color.GREEN;
@@ -26,9 +27,11 @@ public class Note {
 		}
 	}
 	
-	public Note(int x, int y, String colorName, String message, boolean pinned) {
+	public Note(int x, int y, int width, int height, String colorName, String message, boolean pinned) {
 		this.x = x;
 		this.y = y;
+		this.width = width;
+		this.height = height;
 		this.colorName = colorName;
 		this.message = message;
 		this.pinned = pinned;
@@ -40,6 +43,7 @@ public class Note {
 		return px >= x && px <= x + width && py >= y && py <= y + height;
 	}
 	
+	//BoardPanel Getters
     public int getX() { return x; }
     public int getY() { return y; }
     public Color getColor() { return color; }
@@ -50,6 +54,13 @@ public class Note {
     public int getHeight() { return height; }
     
     public void setPinned(boolean pinned) { this.pinned = pinned; }
+
+	public int getCloseButtonX() {
+		return x + width - 15;
+	}
+	public int getCloseButtonY() {
+		return y + 15;
+	}
 	
 	
 }
