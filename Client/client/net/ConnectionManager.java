@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.List;
 
 import client.gui.BoardPanel;
 import client.gui.ClientGUI;
@@ -93,7 +92,7 @@ public class ConnectionManager extends Thread{
                 try {
                     // Format: "NOTE x,y,color,content,isPinned"
                     String data = line.substring(5); // Remove "NOTE "
-                    String[] parts = data.split(",");
+                    String[] parts = data.split(" ");
                     if (parts.length >= 5) {
                         int x = Integer.parseInt(parts[0]);
                         int y = Integer.parseInt(parts[1]);
@@ -101,7 +100,7 @@ public class ConnectionManager extends Thread{
                         String message = parts[3];
                         boolean pinned = Boolean.parseBoolean(parts[4]);
                         
-                        board.notes.add(new Note(x, y, color, message, pinned));
+                        board.notes.add(new Note(x, y, color, message, pinned, board.noteWidth, board.noteHeight));
                         System.out.println("Added note: " + message + " at (" + x + "," + y + ")");
                     }
                 } catch (Exception e) {
@@ -168,9 +167,9 @@ public class ConnectionManager extends Thread{
 	private void processNoteCommand(String []parts) {
 		try {
             // Check format: "NOTE x,y,color,content,isPinned" or "NOTE x y color content"
-            if (parts[1].contains(",")) {
+            if (parts[1].contains(" ")) {
                 // Format: "NOTE x,y,color,content,isPinned"
-                String[] noteParts = parts[1].split(",");
+                String[] noteParts = parts[1].split(" ");
                 if (noteParts.length >= 5) {
                     int x = Integer.parseInt(noteParts[0]);
                     int y = Integer.parseInt(noteParts[1]);
@@ -182,7 +181,7 @@ public class ConnectionManager extends Thread{
                     board.notes.removeIf(note -> note.getX() == x && note.getY() == y);
                     
                     // Add new note
-                    board.notes.add(new Note(x, y, color, message, pinned));
+                    board.notes.add(new Note(x, y, color, message, pinned, board.noteWidth, board.noteHeight));
                     System.out.println("Processed NOTE command: " + message + " at (" + x + "," + y + ")");
                 }
             } else if (parts.length >= 5) {
@@ -209,10 +208,11 @@ public class ConnectionManager extends Thread{
                 board.notes.removeIf(note -> note.getX() == x && note.getY() == y);
                 
                 // Add new note
-                board.notes.add(new Note(x, y, color, message, pinned));
+                board.notes.add(new Note(x, y, color, message, pinned, board.noteWidth, board.noteHeight));
                 System.out.println("Processed NOTE command: " + message + " at (" + x + "," + y + ")");
             }
         } catch (Exception e) {
+        	e.printStackTrace();
             System.err.println("Error processing NOTE command: " + String.join(" ", parts));
         }
 		
@@ -307,5 +307,9 @@ public class ConnectionManager extends Thread{
 	
 	public String getHandshake() {
 		return handshake;
+	}
+	
+	public void setBoardPanel(BoardPanel board) {
+		this.board = board;
 	}
 }

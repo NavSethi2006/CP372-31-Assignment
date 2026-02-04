@@ -123,10 +123,14 @@ public class ClientGUI {
 	
 	
 	private void bulletinboard() {
+		
+
 		SwingUtilities.invokeLater(() -> {
-            BulletinPanel = new BoardPanel(conn, boardwidth, boardheight, notewidth, noteheight);
+	        BulletinPanel = new BoardPanel(conn, boardwidth, boardheight, notewidth, noteheight);
             ControlPanel = new ControlPanel();
             StatusPanel = new StatusPanel();
+            
+            conn.setBoardPanel(BulletinPanel);
 
             frame.add(ControlPanel);
             frame.add(StatusPanel);

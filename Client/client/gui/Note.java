@@ -26,13 +26,14 @@ public class Note {
 		}
 	}
 	
-	public Note(int x, int y, String colorName, String message, boolean pinned) {
+	public Note(int x, int y, String colorName, String message, boolean pinned, int noteWidth, int noteHeight) {
 		this.x = x;
 		this.y = y;
 		this.colorName = colorName;
 		this.message = message;
 		this.pinned = pinned;
-		
+		this.width = noteWidth;
+		this.height = noteHeight;
 		this.color = parseColor(colorName);
 	}
 	

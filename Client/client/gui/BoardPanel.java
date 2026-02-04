@@ -43,8 +43,8 @@ public class BoardPanel extends JPanel{
     
     private int boardWidth;
     private int boardHeight;
-    private int noteWidth;
-    private int noteHeight;
+    public int noteWidth;
+    public int noteHeight;
     
     public BoardPanel(ConnectionManager conn, int boardWidth, int boardHeight, int noteWidth, int noteHeight) {
     	this.conn = conn;
@@ -52,6 +52,9 @@ public class BoardPanel extends JPanel{
     	this.boardHeight = boardHeight;
     	this.noteWidth = noteWidth;
     	this.noteHeight = noteHeight;
+    	
+    	notes = new ArrayList<Note>();
+    	pins = new ArrayList<Pin>();
     	
     	
         setOpaque(false); // Transparent background
@@ -249,7 +252,7 @@ public class BoardPanel extends JPanel{
         String message = note.getMessage();
         
         // Wrap text if too long
-        Font font = new Font("SansSerif", Font.PLAIN, Math.max(8, (int)(8 * scale)));
+        Font font = new Font("SansSerif", Font.PLAIN, Math.max(4, (int)(4 * scale)));
         g2d.setFont(font);
         FontMetrics fm = g2d.getFontMetrics();
         
