@@ -94,8 +94,14 @@ public class ClientHandler extends Thread {
 			x = Integer.parseInt(parts[1]);
 			y = Integer.parseInt(parts[2]);
 			String color = parts[3];
-			String message = parts[4];
-			returnMessage = board.POSTnote(x, y, color, message);
+			StringBuilder message = new StringBuilder();
+			for (int i = 4; i < parts.length - 1; i++) {
+                message.append(parts[i]);
+                if (i < parts.length - 2) {
+                    message.append(" ");
+                }
+            }
+			returnMessage = board.POSTnote(x, y, color, message.toString());
 			System.out.println("RETURNING MESSAGE : "+ returnMessage);
 			send(returnMessage);
 			break;
@@ -113,6 +119,10 @@ public class ClientHandler extends Thread {
 			System.out.println("SENDING RESPONSE");
 			send(getmsg.toString());
 			System.out.println("SENT RESPONSE");
+			break;
+		case "CLEAR":
+			break;
+		case "SHAKE":
 			break;
 		case "DISCONNECT":
 			try {

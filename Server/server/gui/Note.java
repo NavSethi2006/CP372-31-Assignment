@@ -41,7 +41,7 @@ public class Note {
     
     
     public String toProtocolString(boolean isPinned) {
-    	return String.format("NOTE %d,%d,%s,%s,%s", x, y, color, content, isPinned ? "true" : "false");
+    	return String.format("NOTE %d %d %s %s %s", x, y, color, content, isPinned ? "true" : "false");
     }
     
     @Override

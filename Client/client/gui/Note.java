@@ -35,7 +35,6 @@ public class Note {
 		this.colorName = colorName;
 		this.message = message;
 		this.pinned = pinned;
-		
 		this.color = parseColor(colorName);
 	}
 	
