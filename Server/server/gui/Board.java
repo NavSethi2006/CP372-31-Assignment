@@ -136,30 +136,30 @@ public class Board {
 	}
 	
 	public String getAllNotes() {
-		lock.lock();
-		try {
+			
 			StringBuilder allNotesResponse = new StringBuilder();
+			if(!notes.isEmpty()) {
 			for(Note note : notes) {
 				allNotesResponse.append(note.toProtocolString(isNotePinned(note)));
 				allNotesResponse.append("\n");
 			}
+			} else {
+				allNotesResponse.append("NO_NOTES");
+			}
 			return allNotesResponse.toString();
-		} finally {
-			lock.unlock();
-		}
 	}
 	public String getAllPins() {
-		lock.lock();
-		try {
 			StringBuilder allPinsResponse = new StringBuilder();
+			if(!pins.isEmpty()) {
 			for(Pin pin: pins) {
 				allPinsResponse.append(pin.toProtocol());
 				allPinsResponse.append("\n");
 			}
+			} else {
+				allPinsResponse.append(" ");
+			}
 			return allPinsResponse.toString();
-		} finally {
-			lock.unlock();
-		}
+			
 	}
 	
 	public String getNotes(Integer containsX, Integer containsY, String refersTo) {

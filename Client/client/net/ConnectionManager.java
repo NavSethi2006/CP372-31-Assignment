@@ -42,18 +42,24 @@ public class ConnectionManager extends Thread{
 	}
 	
 	public void send(String toSend) {
+		System.out.println("sent");
 		write.println(toSend);
+		write.flush();
 	}
 	
 	
-	public String get(String toSend) {
-		write.println(toSend);
+	public String get() {
+
+		send("GET");
 		String getline = "";
 		try {
 			getline = read.readLine();
+			
+			System.out.println("GOT MESSAGE : "+getline);
 		} catch (IOException e) {
 			ClientGUI.guiError("Failed to GET, please try again");
 		}
+		
 		
 		return getline;
 	}
@@ -64,13 +70,16 @@ public class ConnectionManager extends Thread{
 	public void run() {
 		try {
 			read = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			write = new PrintWriter(socket.getOutputStream());
+			write = new PrintWriter(socket.getOutputStream(), true);
 
 			handshake = read.readLine();
 						
 			String recv;
 			while(connectionStatus) {	
-
+				recv = read.readLine();
+				System.out.println("GOT MESSAGE :"+ recv);
+				processCommand(recv);
+				
 			}
 			
 		} catch(IOException e) {

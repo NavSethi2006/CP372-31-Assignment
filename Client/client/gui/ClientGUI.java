@@ -18,6 +18,8 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 
 import client.net.ConnectionManager;
@@ -119,21 +121,26 @@ public class ClientGUI {
 	
 	
 	private void bulletinboard() {
-		BulletinPanel = new BoardPanel(conn, boardwidth, boardheight, notewidth, noteheight);
-		ControlPanel = new ControlPanel();
-		StatusPanel = new StatusPanel();
+		SwingUtilities.invokeLater(() -> {
+            BulletinPanel = new BoardPanel(conn, boardwidth, boardheight, notewidth, noteheight);
+            ControlPanel = new ControlPanel();
+            StatusPanel = new StatusPanel();
 
-		frame.add(ControlPanel);
-		frame.add(StatusPanel);
-	    frame.add(BulletinPanel);
-		frame.setSize(boardwidth, boardheight);
-		
-		JLabel ServerAddress = new JLabel(IPNumber+":"+PortNumber+" Username : "+ alias);
-		ServerAddress.setFont(new Font("Dialog", Font.BOLD, 13));
-		ServerAddress.setBounds(0,0,300,50);
-			
-		BulletinPanel.add(ServerAddress);
-		addListener();
+            frame.getContentPane().removeAll();
+            frame.getContentPane().setLayout(new BorderLayout());
+            frame.add(ControlPanel, BorderLayout.NORTH);
+            frame.add(BulletinPanel, BorderLayout.CENTER);
+            frame.add(StatusPanel, BorderLayout.SOUTH);
+            frame.setSize(boardwidth, boardheight + 100); // Add space for panels
+            
+            JLabel ServerAddress = new JLabel(IPNumber + ":" + PortNumber + " Username : " + alias);
+            ServerAddress.setFont(new Font("Dialog", Font.BOLD, 13));
+            BulletinPanel.add(ServerAddress);
+            
+            addListener();
+            frame.revalidate();
+            frame.repaint();
+        });
 		
 	}
 	
@@ -164,7 +171,7 @@ public class ClientGUI {
                 String color = (String) colorBox.getSelectedItem();
                 String message = messageField.getText();
                 
-                conn.send("POST "+x+" "+y+" "+color+" "+message);
+                conn.send("NOTE "+x+" "+y+" "+color+" "+message);
                 
                 dialog.dispose();
                 
@@ -179,10 +186,39 @@ public class ClientGUI {
     }
     
     private void refreshBoard() {
-    	StatusPanel.log("Refreshing Board....");
-    	
-    	String notesResponse = conn.get("GET");
-    	System.out.println(notesResponse);
+        SwingWorker<Void, String> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                publish("Refreshing Board....");
+                String notesResponse = conn.get();
+                publish(notesResponse);
+                return null;
+            }
+            
+            @Override
+            protected void process(List<String> chunks) {
+                for (String message : chunks) {
+                    if (message.equals("Refreshing Board....")) {
+                        StatusPanel.log(message);
+                    } else {
+                        System.out.println(message);
+                        // Update the board panel with new data
+                        if (BulletinPanel != null) {
+                            BulletinPanel.updateBoard(message);
+                        }
+                    }
+                }
+            }
+            
+            @Override
+            protected void done() {
+                SwingUtilities.invokeLater(() -> {
+                    frame.revalidate();
+                    frame.repaint();
+                });
+            }
+        };
+        worker.execute();
     }
     
     private void showPinDialog(boolean isPin) {
@@ -285,4 +321,9 @@ public class ClientGUI {
 	public int ServerPortAddr() {return PortNumber;}
 	public String ServerAlias() {return alias;}
  	public static void guiError(String message) {JOptionPane.showMessageDialog(frame, message);}
+
+	public void shutdown() {
+		// TODO Auto-generated method stub
+		
+	}
 }

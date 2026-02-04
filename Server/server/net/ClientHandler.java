@@ -43,7 +43,8 @@ public class ClientHandler extends Thread {
 	}
 	
 	public void send(String postmsg) {
-		out.write(postmsg);
+		System.out.println("sent");
+		out.println(postmsg);
 		out.flush();
 	}
 	
@@ -61,25 +62,27 @@ public class ClientHandler extends Thread {
 	// put all client communication related external function in here
 	public void run() {
 		
+		try {
 		String handshake = board.getConfigString();
 
 		out.println(handshake);
 		
 		String command;
-		while(socket.isConnected()) {
-			try {
-				command = in.readLine();
+		while((command = in.readLine()) != null) {
 				System.out.println(command);
 				processCommand(command);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
+				
+		}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
 		}
 	}
 	
 	private void processCommand(String command) {
+		if (command == null || command.trim().isEmpty()) {
+            return;
+        }
 		String[] parts = command.split(" ", 2);
 		String cmd = parts[0].toUpperCase();
 		int x;
@@ -102,10 +105,13 @@ public class ClientHandler extends Thread {
 			send(returnMessage);
 			break;
 		case "GET":
+			System.out.println("GOT MESSAGE : GET");
 			StringBuilder getmsg = new StringBuilder();
 			getmsg.append(board.getAllNotes());
 			getmsg.append(board.getAllPins());
+			System.out.println("SENDING RESPONSE");
 			send(getmsg.toString());
+			System.out.println("SENT RESPONSE");
 			break;
 		case "DISCONNECT":
 			try {

@@ -14,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.swing.JPanel;
 
@@ -32,6 +33,15 @@ public class BoardPanel extends JPanel{
     private final Color GRID_COLOR = new Color(220, 220, 200);
     private final Color BORDER_COLOR = new Color(139, 69, 19); // Brown
     private final Color PIN_COLOR = new Color(220, 20, 60); // Crimson red
+    
+    private static final Pattern NOTE_PATTERN = 
+            Pattern.compile("NOTE (\\d+) (\\d+) (\\w+) (.+)");
+        private static final Pattern PIN_PATTERN = 
+            Pattern.compile("PIN (\\d+) (\\d+)");
+        private static final Pattern CLEAR_PATTERN = 
+            Pattern.compile("CLEAR");
+        private static final Pattern SHAKE_PATTERN = 
+            Pattern.compile("SHAKE");
     
     // Mouse interaction
     private Point dragStart = null;
@@ -97,7 +107,124 @@ public class BoardPanel extends JPanel{
             repaint();
         });
     }
-    
+    public void updateBoard(String serverResponse) {
+        if (serverResponse == null || serverResponse.trim().isEmpty()) {
+            return;
+        }
+        
+        // Process each line in the response
+        String[] lines = serverResponse.split("\n");
+        List<Note> newNotes = new ArrayList<>();
+        List<Pin> newPins = new ArrayList<>();
+        
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+            
+            // Check for clear command
+            if (CLEAR_PATTERN.matcher(line).matches()) {
+                newNotes.clear();
+                newPins.clear();
+                continue;
+            }
+            
+            // Check for shake command
+            if (SHAKE_PATTERN.matcher(line).matches()) {
+                // Add a visual shake effect
+                performShakeAnimation();
+                continue;
+            }
+            
+            // Parse note
+            Matcher noteMatcher = NOTE_PATTERN.matcher(line);
+            if (noteMatcher.matches()) {
+                try {
+                    int x = Integer.parseInt(noteMatcher.group(1));
+                    int y = Integer.parseInt(noteMatcher.group(2));
+                    String colorName = noteMatcher.group(3);
+                    String message = noteMatcher.group(4);
+                    
+                    Color color = parseColor(colorName);
+                    Note note = new Note(x, y, noteWidth, noteHeight, color, message);
+                    
+                    // Check if this note is pinned
+                    boolean isPinned = isNotePinned(x, y, newPins);
+                    note.setPinned(isPinned);
+                    
+                    newNotes.add(note);
+                } catch (NumberFormatException e) {
+                    System.err.println("Error parsing note coordinates: " + line);
+                }
+                continue;
+            }
+            
+            // Parse pin
+            Matcher pinMatcher = PIN_PATTERN.matcher(line);
+            if (pinMatcher.matches()) {
+                try {
+                    int x = Integer.parseInt(pinMatcher.group(1));
+                    int y = Integer.parseInt(pinMatcher.group(2));
+                    newPins.add(new Pin(x, y));
+                    
+                    // Update any existing note at this location
+                    for (Note note : newNotes) {
+                        if (note.getX() == x && note.getY() == y) {
+                            note.setPinned(true);
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("Error parsing pin coordinates: " + line);
+                }
+                continue;
+            }
+            
+            // Parse "UNPIN" command if your protocol supports it
+            if (line.startsWith("UNPIN")) {
+                String[] parts = line.split(" ");
+                if (parts.length == 3) {
+                    try {
+                        int x = Integer.parseInt(parts[1]);
+                        int y = Integer.parseInt(parts[2]);
+                        // Remove pin at this location
+                        newPins.removeIf(pin -> pin.getX() == x && pin.getY() == y);
+                        // Unpin any note at this location
+                        for (Note note : newNotes) {
+                            if (note.getX() == x && note.getY() == y) {
+                                note.setPinned(false);
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error parsing unpin coordinates: " + line);
+                    }
+                }
+            }
+            
+            // Handle bulk note format: "NOTES 10 20 red Hello World"
+            if (line.startsWith("NOTES ")) {
+                String[] parts = line.split(" ", 6);
+                if (parts.length == 6) {
+                    try {
+                        int x = Integer.parseInt(parts[1]);
+                        int y = Integer.parseInt(parts[2]);
+                        Color color = parseColor(parts[3]);
+                        String message = parts[5];
+                        Note note = new Note(x, y, noteWidth, noteHeight, color, message);
+                        note.setPinned(isNotePinned(x, y, newPins));
+                        newNotes.add(note);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error parsing bulk note: " + line);
+                    }
+                }
+            }
+        }
+        
+        // Update the board with new data
+        this.notes = newNotes;
+        this.pins = newPins;
+        
+        // Repaint on EDT
+        SwingUtilities.invokeLater(this::repaint);
+    }
 
     
     @Override
