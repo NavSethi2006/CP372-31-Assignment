@@ -49,20 +49,20 @@ public class Board {
 		lock.lock();
 		try {
 			if(validColors.contains(Color.toLowerCase())) {
-				return "[-] POST note ERROR COLOR_NOT_SUPPORTED " + Color + " is not a valid color";
+				return "ERROR COLOR_NOT_SUPPORTED " + Color + " is not a valid color";
 			}
 			Note note = new Note(x, y, Color, message, noteWidth, noteHeight);
 			if(!note.isWithinBounds(boardWidth, boardHeight)) {
-				return "[-] POST note ERROR OUT_OF_BOARD_BOUNDS x:"+x+" y:"+y+" exceed border bounds"; 
+				return "ERROR OUT_OF_BOARD_BOUNDS x:"+x+" y:"+y+" exceed border bounds"; 
 			}
 				
 			for (Note allnotes : notes) {
 				if(note.completeOverlap(allnotes)) {
-					return "[-] POST note ERROR OVERLAP_NOTE x:"+x+" y:"+y+" already has a note that exists";
+					return "ERROR OVERLAP_NOTE x:"+x+" y:"+y+" already has a note that exists";
 				}
 			}
 			notes.add(note);
-			return "[+] OK NOTE_POSTED";
+			return "OK NOTE_POSTED";
 		} finally {
 			lock.unlock();
 		}
@@ -81,7 +81,7 @@ public class Board {
 			}
 			
 			if(insideAnyNote) {
-				return "[-] POST pin ERROR PIN_OVERLAP_WITH_NOTE x:"+x+" y:"+y+" already has a note associated with that position";
+				return "ERROR PIN_OVERLAP_WITH_NOTE x:"+x+" y:"+y+" already has a note associated with that position";
 			}
 			pins.add(new Pin(x,y));
 			return "OK PIN_ADDED";
@@ -99,7 +99,7 @@ public class Board {
 			pins.remove(pintoremove);
 			return "OK PIN_REMOVED";
 		} else {
-			return "[-]ERROR PIN_NOT_FOUND No pin at this location exists";
+			return "ERROR PIN_NOT_FOUND No pin at this location exists";
 		}
 		
 		} finally {

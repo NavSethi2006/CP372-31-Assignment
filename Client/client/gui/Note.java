@@ -10,7 +10,7 @@ public class Note {
 	private boolean pinned;
 	private final int width, height;
 	
-	private Color parseColor(String colorName) {
+	public Color parseColor(String colorName) {
 		switch(colorName.toLowerCase()) {
 		case "red": return Color.RED;
 		case "green": return Color.GREEN;
@@ -26,14 +26,13 @@ public class Note {
 		}
 	}
 	
-	public Note(int x, int y, String colorName, String message, boolean pinned, int width, int height) {
+	public Note(int x, int y, String colorName, String message, boolean pinned) {
 		this.x = x;
 		this.y = y;
 		this.colorName = colorName;
 		this.message = message;
 		this.pinned = pinned;
-		this.width = width;
-		this.height = height;
+		
 		this.color = parseColor(colorName);
 	}
 	

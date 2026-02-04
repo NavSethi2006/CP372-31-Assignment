@@ -43,7 +43,6 @@ public class ClientHandler extends Thread {
 	}
 	
 	public void send(String postmsg) {
-		System.out.println("sent");
 		out.println(postmsg);
 		out.flush();
 	}
@@ -83,7 +82,7 @@ public class ClientHandler extends Thread {
 		if (command == null || command.trim().isEmpty()) {
             return;
         }
-		String[] parts = command.split(" ", 2);
+		String[] parts = command.split(" ");
 		String cmd = parts[0].toUpperCase();
 		int x;
 		int y;
@@ -91,11 +90,13 @@ public class ClientHandler extends Thread {
 		
 		switch(cmd) {
 		case "NOTE":
+			System.out.println("GOT MESSAGE : NOTE");
 			x = Integer.parseInt(parts[1]);
 			y = Integer.parseInt(parts[2]);
 			String color = parts[3];
 			String message = parts[4];
 			returnMessage = board.POSTnote(x, y, color, message);
+			System.out.println("RETURNING MESSAGE : "+ returnMessage);
 			send(returnMessage);
 			break;
 		case "PIN":

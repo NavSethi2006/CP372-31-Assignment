@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -39,13 +41,13 @@ public class ClientGUI {
 	private BoardPanel BulletinPanel;
 	private ControlPanel ControlPanel;
 	private StatusPanel StatusPanel;
-
-
+	private ExecutorService executor;
 
 	/**
 	 * Create the application.
 	 */
 	public ClientGUI() {
+		executor = Executors.newCachedThreadPool();
 		initialize();
 	}
 
@@ -126,11 +128,10 @@ public class ClientGUI {
             ControlPanel = new ControlPanel();
             StatusPanel = new StatusPanel();
 
-            frame.getContentPane().removeAll();
-            frame.getContentPane().setLayout(new BorderLayout());
-            frame.add(ControlPanel, BorderLayout.NORTH);
-            frame.add(BulletinPanel, BorderLayout.CENTER);
-            frame.add(StatusPanel, BorderLayout.SOUTH);
+            frame.add(ControlPanel);
+            frame.add(StatusPanel);
+            frame.add(BulletinPanel);
+
             frame.setSize(boardwidth, boardheight + 100); // Add space for panels
             
             JLabel ServerAddress = new JLabel(IPNumber + ":" + PortNumber + " Username : " + alias);
@@ -145,44 +146,52 @@ public class ClientGUI {
 	}
 	
     private void showPostDialog() {
-        JDialog dialog = new JDialog();
-        dialog.setLayout(new FlowLayout());
-        
-        JTextField xField = new JTextField("10", 5);
-        JTextField yField = new JTextField("10", 5);
-        String[] colors = {"red", "blue", "green", "yellow", "pink", "white", "cyan"};
-        JComboBox<String> colorBox = new JComboBox<>(colors);
-        JTextField messageField = new JTextField(20);
-        
-        dialog.add(new JLabel("X:"));
-        dialog.add(xField);
-        dialog.add(new JLabel("Y:"));
-        dialog.add(yField);
-        dialog.add(new JLabel("Color:"));
-        dialog.add(colorBox);
-        dialog.add(new JLabel("Message:"));
-        dialog.add(messageField);
-        
-        JButton postBtn = new JButton("Post");
-        postBtn.addActionListener(e -> {
-            try {
-                int x = Integer.parseInt(xField.getText());
-                int y = Integer.parseInt(yField.getText());
-                String color = (String) colorBox.getSelectedItem();
-                String message = messageField.getText();
-                
-                conn.send("NOTE "+x+" "+y+" "+color+" "+message);
-                
-                dialog.dispose();
-                
-            } catch (NumberFormatException ex) {
-                StatusPanel.log("Error: Invalid coordinates");
-            }
-        });
-        
-        dialog.add(postBtn);
-        dialog.pack();
-        dialog.setVisible(true);
+    	
+    	SwingUtilities.invokeLater(() -> {
+	        JDialog dialog = new JDialog();
+	        dialog.setLayout(new FlowLayout());
+	        
+	        JTextField xField = new JTextField("10", 5);
+	        JTextField yField = new JTextField("10", 5);
+	        String[] colors = {"red", "blue", "green", "yellow", "pink", "white", "cyan"};
+	        JComboBox<String> colorBox = new JComboBox<>(colors);
+	        JTextField messageField = new JTextField(20);
+	        
+	        dialog.add(new JLabel("X:"));
+	        dialog.add(xField);
+	        dialog.add(new JLabel("Y:"));
+	        dialog.add(yField);
+	        dialog.add(new JLabel("Color:"));
+	        dialog.add(colorBox);
+	        dialog.add(new JLabel("Message:"));
+	        dialog.add(messageField);
+	        
+	        JButton postBtn = new JButton("Post");
+	        postBtn.addActionListener(e -> {
+	            try {
+	                int x = Integer.parseInt(xField.getText());
+	                int y = Integer.parseInt(yField.getText());
+	                String color = (String) colorBox.getSelectedItem();
+	                String message = messageField.getText();
+	                
+	                executor.submit(() -> {
+		                conn.send("NOTE "+x+" "+y+" "+color+" "+message);
+		                SwingUtilities.invokeLater(() -> {
+		                	  StatusPanel.log("Note posted at (" + x + "," + y + ")");
+		                });
+	                });
+	                
+	                dialog.dispose();
+	                
+	            } catch (NumberFormatException ex) {
+	                StatusPanel.log("Error: Invalid coordinates");
+	            }
+	        });
+	        
+	        dialog.add(postBtn);
+	        dialog.pack();
+	        dialog.setVisible(true);
+    	});
     }
     
     private void refreshBoard() {
@@ -202,14 +211,12 @@ public class ClientGUI {
                         StatusPanel.log(message);
                     } else {
                         System.out.println(message);
-                        // Update the board panel with new data
                         if (BulletinPanel != null) {
-                            BulletinPanel.updateBoard(message);
+                            BulletinPanel.repaint();
                         }
                     }
                 }
             }
-            
             @Override
             protected void done() {
                 SwingUtilities.invokeLater(() -> {
@@ -222,64 +229,84 @@ public class ClientGUI {
     }
     
     private void showPinDialog(boolean isPin) {
-        JDialog dialog = new JDialog(frame, isPin ? "Add Pin" : "Remove Pin", true);
-        dialog.setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
-        dialog.setSize(250, 150);
+    	SwingUtilities.invokeLater(() -> {
+        	
         
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
-        // X coordinate
-        JPanel xPanel = new JPanel(new BorderLayout());
-        xPanel.add(new JLabel("X:"), BorderLayout.WEST);
-        JTextField xField = new JTextField(isPin ? "15" : "15", 10);
-        xPanel.add(xField, BorderLayout.CENTER);
-        
-        // Y coordinate
-        JPanel yPanel = new JPanel(new BorderLayout());
-        yPanel.add(new JLabel("Y:"), BorderLayout.WEST);
-        JTextField yField = new JTextField(isPin ? "12" : "12", 10);
-        yPanel.add(yField, BorderLayout.CENTER);
-        
-        panel.add(xPanel);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(yPanel);
-        
-        JButton actionBtn = new JButton(isPin ? "Pin" : "Unpin");
-        actionBtn.addActionListener(e -> {
-            try {
-                int x = Integer.parseInt(xField.getText());
-                int y = Integer.parseInt(yField.getText());
-                
-                String command = isPin ? String.format("PIN %d %d", x, y) : 
-                                         String.format("UNPIN %d %d", x, y);
-                conn.send(command);
-                dialog.dispose();
-                
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Invalid coordinates!", "Error", JOptionPane.ERROR_MESSAGE);
-            }
+	    	JDialog dialog = new JDialog(frame, isPin ? "Add Pin" : "Remove Pin", true);
+	        dialog.setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
+	        dialog.setSize(250, 150);
+	        
+	        JPanel panel = new JPanel();
+	        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+	        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+	        
+	        // X coordinate
+	        JPanel xPanel = new JPanel(new BorderLayout());
+	        xPanel.add(new JLabel("X:"), BorderLayout.WEST);
+	        JTextField xField = new JTextField(isPin ? "15" : "15", 10);
+	        xPanel.add(xField, BorderLayout.CENTER);
+	        
+	        // Y coordinate
+	        JPanel yPanel = new JPanel(new BorderLayout());
+	        yPanel.add(new JLabel("Y:"), BorderLayout.WEST);
+	        JTextField yField = new JTextField(isPin ? "12" : "12", 10);
+	        yPanel.add(yField, BorderLayout.CENTER);
+	        
+	        panel.add(xPanel);
+	        panel.add(Box.createVerticalStrut(10));
+	        panel.add(yPanel);
+	        
+	        JButton actionBtn = new JButton(isPin ? "Pin" : "Unpin");
+	        actionBtn.addActionListener(e -> {
+	            try {
+	                int x = Integer.parseInt(xField.getText());
+	                int y = Integer.parseInt(yField.getText());
+	                
+	                String command = isPin ? String.format("PIN %d %d", x, y) : 
+	                                         String.format("UNPIN %d %d", x, y);
+	                executor.submit(() -> {
+	                	conn.send(command);
+	                	SwingUtilities.invokeLater(() -> {
+	                		StatusPanel.log(isPin ? "Pin Added" : "Pin removed");
+	                	});
+	                });
+	                
+	                dialog.dispose();
+	                
+	            } catch (NumberFormatException ex) {
+	                JOptionPane.showMessageDialog(dialog, "Invalid coordinates!", "Error", JOptionPane.ERROR_MESSAGE);
+	            }
+	        });
+	        
+	        panel.add(Box.createVerticalStrut(20));
+	        panel.add(actionBtn);
+	        
+	        dialog.add(panel);
+	        dialog.setLocationRelativeTo(frame);
+	        dialog.setVisible(true);
         });
-        
-        panel.add(Box.createVerticalStrut(20));
-        panel.add(actionBtn);
-        
-        dialog.add(panel);
-        dialog.setLocationRelativeTo(frame);
-        dialog.setVisible(true);
     }
-	
+    	
     private void addListener() {
     	ControlPanel.getPostButton().addActionListener(e->showPostDialog());
     	ControlPanel.getPinButton().addActionListener(e->showPinDialog(true));
     	ControlPanel.getUnpinButton().addActionListener(e->showPinDialog(false));
     	ControlPanel.getGetButton().addActionListener(e->refreshBoard());
     	ControlPanel.getShakeButton().addActionListener(e-> {
-    		conn.send("SHAKE");
+    		executor.submit(() -> {
+                conn.send("SHAKE");
+                SwingUtilities.invokeLater(() -> {
+                    StatusPanel.log("Shake command sent");
+                });
+            });
     	});
     	ControlPanel.getClearButton().addActionListener(e-> {
-    		conn.send("CLEAR");
+    		 executor.submit(() -> {
+                 conn.send("CLEAR");
+                 SwingUtilities.invokeLater(() -> {
+                     StatusPanel.log("Clear command sent");
+                 });
+             });
     	});
     	ControlPanel.getRefreshButton().addActionListener(e->refreshBoard());
     }
@@ -291,7 +318,7 @@ public class ClientGUI {
 			PortNumber = Integer.parseInt(ServerPort.getText().replaceAll(" ", ""));
 			alias = Alias.getText();
 			
-			conn.connectToServer(IPNumber, PortNumber, alias);
+			conn.connectToServer(IPNumber, PortNumber, alias, BulletinPanel);
 			conn.start();
 			
 			if(conn.getConnectionStatus()) {
@@ -310,11 +337,8 @@ public class ClientGUI {
 				for(int i = 3; i < info.length; i++)
 					colors.add(info[i]);
 				
-				bulletinboard();
-				
+				bulletinboard();				
 			}
-			
-			
 		}	
 	}
 	public String ServerIpAddr() {return IPNumber;}
