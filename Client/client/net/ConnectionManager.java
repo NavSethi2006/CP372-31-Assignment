@@ -100,7 +100,7 @@ public class ConnectionManager extends Thread{
                         String message = parts[3];
                         boolean pinned = Boolean.parseBoolean(parts[4]);
                         
-                        board.notes.add(new Note(x, y, color, message, pinned, board.noteWidth, board.noteHeight));
+                        board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
                         System.out.println("Added note: " + message + " at (" + x + "," + y + ")");
                     }
                 } catch (Exception e) {
@@ -181,7 +181,7 @@ public class ConnectionManager extends Thread{
                     board.notes.removeIf(note -> note.getX() == x && note.getY() == y);
                     
                     // Add new note
-                    board.notes.add(new Note(x, y, color, message, pinned, board.noteWidth, board.noteHeight));
+                    board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
                     System.out.println("Processed NOTE command: " + message + " at (" + x + "," + y + ")");
                 }
             } else if (parts.length >= 5) {
@@ -208,7 +208,7 @@ public class ConnectionManager extends Thread{
                 board.notes.removeIf(note -> note.getX() == x && note.getY() == y);
                 
                 // Add new note
-                board.notes.add(new Note(x, y, color, message, pinned, board.noteWidth, board.noteHeight));
+                board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
                 System.out.println("Processed NOTE command: " + message + " at (" + x + "," + y + ")");
             }
         } catch (Exception e) {
