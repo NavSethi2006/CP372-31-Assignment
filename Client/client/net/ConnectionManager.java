@@ -7,6 +7,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import javax.swing.SwingUtilities;
+
 import client.gui.BoardPanel;
 import client.gui.ClientGUI;
 import client.gui.Note;
@@ -91,15 +93,19 @@ public class ConnectionManager extends Thread{
             if (line.startsWith("NOTE")) {
                 try {
                     // Format: "NOTE x,y,color,content,isPinned"
-                    String data = line.substring(5); // Remove "NOTE "
+                    String data = line.substring(5);
                     String[] parts = data.split(" ");
                     if (parts.length >= 5) {
                         int x = Integer.parseInt(parts[0]);
                         int y = Integer.parseInt(parts[1]);
                         String color = parts[2];
-                        String message = parts[3];
-                        boolean pinned = Boolean.parseBoolean(parts[4]);
-                        
+                        StringBuilder messageBuilder = new StringBuilder();
+                        for (int i = 3; i < parts.length - 1; i++) {
+                            messageBuilder.append(parts[i]);
+                            if (i < parts.length - 2) messageBuilder.append(" ");
+                        }
+                        String message = messageBuilder.toString();
+                        boolean pinned = Boolean.parseBoolean(parts[parts.length - 1]);
                         board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
                         System.out.println("Added note: " + message + " at (" + x + "," + y + ")");
                     }
@@ -136,9 +142,11 @@ public class ConnectionManager extends Thread{
                     break;
                 }
             }
-            note.setPinned(isPinned);
+            if (!note.isPinned()) {
+                note.setPinned(isPinned);
+            }
         }
-        
+        board.repaint();
         System.out.println("Parsed " + board.notes.size() + " notes and " + board.pins.size() + " pins");
     }
 	
@@ -165,58 +173,35 @@ public class ConnectionManager extends Thread{
 	}
 	
 	private void processNoteCommand(String []parts) {
-		try {
-            // Check format: "NOTE x,y,color,content,isPinned" or "NOTE x y color content"
-            if (parts[1].contains(" ")) {
-                // Format: "NOTE x,y,color,content,isPinned"
-                String[] noteParts = parts[1].split(" ");
-                if (noteParts.length >= 5) {
-                    int x = Integer.parseInt(noteParts[0]);
-                    int y = Integer.parseInt(noteParts[1]);
-                    String color = noteParts[2];
-                    String message = noteParts[3];
-                    boolean pinned = Boolean.parseBoolean(noteParts[4]);
-                    
-                    // Remove existing note at this position
-                    board.notes.removeIf(note -> note.getX() == x && note.getY() == y);
-                    
-                    // Add new note
-                    board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
-                    System.out.println("Processed NOTE command: " + message + " at (" + x + "," + y + ")");
-                }
-            } else if (parts.length >= 5) {
-                // Format: "NOTE x y color message"
-                int x = Integer.parseInt(parts[1]);
-                int y = Integer.parseInt(parts[2]);
-                String color = parts[3];
-                StringBuilder messageBuilder = new StringBuilder();
-                for (int i = 4; i < parts.length; i++) {
-                    messageBuilder.append(parts[i]).append(" ");
-                }
-                String message = messageBuilder.toString().trim();
-                
-                // Check if pinned
-                boolean pinned = false;
-                for (Pin pin : board.pins) {
-                    if (pin.getX() == x && pin.getY() == y) {
-                        pinned = true;
-                        break;
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Protocol: NOTE x y color Word1 Word2 ... WordN pinnedStatus
+                if (parts.length >= 6) { // Ensure we have at least x, y, color, message, boolean
+                    int x = Integer.parseInt(parts[1]);
+                    int y = Integer.parseInt(parts[2]);
+                    String color = parts[3];
+                    StringBuilder messageBuilder = new StringBuilder();
+                    for (int i = 4; i < parts.length - 1; i++) {
+                        messageBuilder.append(parts[i]);
+                        // Add space between words, but not after last word
+                        if (i < parts.length - 2) {
+                            messageBuilder.append(" ");
+                        }
                     }
+                    String message = messageBuilder.toString();
+                    boolean pinned = Boolean.parseBoolean(parts[parts.length - 1]);
+                    board.notes.removeIf(note -> note.getX() == x && note.getY() == y);
+                    // Add new note with pin status
+                    board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
+                    board.repaint();
+                    System.out.println("Processed NOTE: " + message + " (Pinned: " + pinned + ")");
                 }
-                
-                // Remove existing note at this position
-                board.notes.removeIf(note -> note.getX() == x && note.getY() == y);
-                
-                // Add new note
-                board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
-                System.out.println("Processed NOTE command: " + message + " at (" + x + "," + y + ")");
+            } catch (Exception e) {
+                System.err.println("Error processing NOTE command: " + String.join(" ", parts));
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-        	e.printStackTrace();
-            System.err.println("Error processing NOTE command: " + String.join(" ", parts));
-        }
-		
-	}
+        });
+    }
 	
 	private void processPinCommand(String []parts) {
         try {
