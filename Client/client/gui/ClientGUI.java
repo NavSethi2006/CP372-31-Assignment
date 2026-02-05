@@ -182,6 +182,7 @@ public class ClientGUI {
 		                conn.send("NOTE "+x+" "+y+" "+color+" "+message);
 		                SwingUtilities.invokeLater(() -> {
 		                	  StatusPanel.log("Note posted at (" + x + "," + y + ")");
+		                	  refreshBoard(); // Refresh board to show the new note
 		                });
 	                });
 	                
