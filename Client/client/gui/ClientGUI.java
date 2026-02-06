@@ -179,7 +179,12 @@ public class ClientGUI {
 	                String message = messageField.getText();
 	                
 	                executor.submit(() -> {
-		                conn.send("NOTE "+x+" "+y+" "+color+" "+message);
+		                conn.send("NOTE " + x + " " + y + " " + color + " " + message);
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException ex) {
+							// ignore
+						}
 		                SwingUtilities.invokeLater(() -> {
 		                	  StatusPanel.log("Note posted at (" + x + "," + y + ")");
 		                	  refreshBoard(); // Refresh board to show the new note
@@ -314,6 +319,17 @@ public class ClientGUI {
              });
     	});
     	ControlPanel.getRefreshButton().addActionListener(e->refreshBoard());
+		// Disconnect button
+		frame.addWindowListener(new java.awt.event.WindowAdapter() {
+			@Override
+			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+				if (conn != null) {
+					conn.disconnect();
+				}
+				executor.shutdownNow();
+				System.exit(0);
+			}
+		});
     }
 	
 	private class getInfo implements ActionListener {

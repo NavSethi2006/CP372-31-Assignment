@@ -3,7 +3,7 @@ package client.gui;
 import java.util.Objects;
 
 public class Pin {
-	private int x,y;
+	private int x, y;
 	
 	public Pin(int x, int y) {
 		this.x = x;
@@ -14,7 +14,7 @@ public class Pin {
 	public int getY() {return y;}
 	
 	public String toString() {
-		return String.format("PIN %d %d", x,y);
+		return String.format("PIN %d %d", x, y);
 	}
 
 	@Override

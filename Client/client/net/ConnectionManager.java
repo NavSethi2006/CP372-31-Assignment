@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -14,294 +16,389 @@ import client.gui.ClientGUI;
 import client.gui.Note;
 import client.gui.Pin;
 
-public class ConnectionManager extends Thread{
-	
-	private Socket socket;
-	private String alias;
-	boolean connectionStatus = false;
-	private BufferedReader read;
-	private PrintWriter write;
-	private String handshake;
-	private BoardPanel board;
-	
-	public void connectToServer (String ip, int port, String alias, BoardPanel board) {
-		this.alias = alias;
-			try {
-			
-			socket = new Socket(ip, port);
-			connectionStatus = socket.isConnected();
-			this.board = board;
-			
-		} catch(UnknownHostException e1) {
-			ClientGUI.guiError("ERROR : The host your trying to connect to does not exist."
-							+ "assure that the IP address and the PORT number are correct, then try connecting again");
-		} catch (IOException e) {
-			ClientGUI.guiError("ERROR : SOMETHING WENT WRONG");
-		}
-	}
-	
-	public boolean getConnectionStatus() {
-		return connectionStatus;
-	}
-	
-	public void send(String toSend) {
-		System.out.println("sent");
-		write.println(toSend);
-		write.flush();
-	}
-	
-	public String get() {
-
-        send("GET");
-        StringBuilder response = new StringBuilder();
+public class ConnectionManager extends Thread {
+    
+    private Socket socket;
+    private String alias;
+    private volatile boolean connectionStatus = false;
+    private volatile boolean running = true;
+    private BufferedReader read;
+    private PrintWriter write;
+    private String handshake;
+    private BoardPanel board;
+    
+    public void connectToServer(String ip, int port, String alias, BoardPanel board) {
+        this.alias = alias;
         try {
-            String line;
-            while ((line = read.readLine()) != null && !line.trim().isEmpty()) {
-                response.append(line).append("\n");
-                System.out.println("GET Response line: " + line);
-            }
-            System.out.println("GET Response:\n" + response.toString());
+            socket = new Socket(ip, port);
+            connectionStatus = socket.isConnected();
+            this.board = board;
             
-            // Parse the response and update notes/pins
-            parseGetResponse(response.toString());
+        } catch(UnknownHostException e1) {
+            ClientGUI.guiError("ERROR : The host you're trying to connect to does not exist.");
+        } catch (IOException e) {
+            ClientGUI.guiError("ERROR : Could not connect to server - " + e.getMessage());
+        }
+    }
+    
+    public boolean getConnectionStatus() {
+        return connectionStatus;
+    }
+    
+    public synchronized void send(String toSend) {
+        if (write != null && connectionStatus) {
+            System.out.println("Sending: " + toSend);
+            write.println(toSend);
+            write.flush();
+        }
+    }
+    
+    public void requestGet() {
+        send("GET");
+    }
+    
+    public String get() {
+        requestGet();
+        return "GET requested";
+    }
+    
+    public void disconnect() {
+        System.out.println("Disconnecting from server...");
+        running = false;
+        
+        try {
+            if (write != null && connectionStatus) {
+                send("DISCONNECT " + alias);
+                Thread.sleep(100);
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        
+        connectionStatus = false;
+        
+        try {
+            if (read != null) read.close();
+            if (write != null) write.close();
+            if (socket != null && !socket.isClosed()) socket.close();
+            System.out.println("Disconnected successfully");
+        } catch (IOException e) {
+            System.err.println("Error during disconnect: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public void run() {
+        try {
+            read = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            write = new PrintWriter(socket.getOutputStream(), true);
+
+            handshake = read.readLine();
+            System.out.println("Received handshake: " + handshake);
+                        
+            String recv;
+            while(running && connectionStatus) {    
+                recv = read.readLine();
+                if (recv == null) {
+                    System.out.println("Server closed connection");
+                    break;
+                }
+                System.out.println("GOT MESSAGE: " + recv);
+                processCommand(recv);
+            }
+            
+        } catch(IOException e) {
+            if (running) {
+                SwingUtilities.invokeLater(() -> {
+                    ClientGUI.guiError("ERROR : Lost connection to server");
+                });
+            }
+        } finally {
+            disconnect();
+        }
+    }
+    
+    private void parseGetResponse() {
+        try {
+            List<Note> newNotes = new ArrayList<>();
+            List<Pin> newPins = new ArrayList<>();
+            
+            String line;
+            while ((line = read.readLine()) != null) {
+                line = line.trim();
+                System.out.println("GET line: " + line);
+                
+                if (line.isEmpty()) {
+                    break;
+                }
+                
+                if (line.startsWith("NOTE")) {
+                    parseNoteLine(line, newNotes);
+                } else if (line.startsWith("PIN")) {
+                    parsePinLine(line, newPins);
+                } else if (line.equals("NO_NOTES")) {
+                    break;
+                }
+            }
+            
+            updateNotesWithPins(newNotes, newPins);
+            
+            System.out.println("Loaded " + newNotes.size() + " notes and " + newPins.size() + " pins");
             
         } catch (IOException e) {
-            ClientGUI.guiError("Failed to GET, please try again");
-            return "";
+            System.err.println("Error parsing GET response: " + e.getMessage());
         }
-        
-        return response.toString();
-	}
-
-	private void parseGetResponse(String response) {
-        if (response == null || response.trim().isEmpty()) {
-            return;
-        }
-        
-        // Clear current lists
-        board.notes.clear();
-        board.pins.clear();
-        
-        String[] lines = response.split("\n");
-        for (String line : lines) {
-            line = line.trim();
-            if (line.isEmpty()) continue;
+    }
+    
+    private void parseShakeState() {
+        try {
+            System.out.println("Parsing ATOMIC SHAKE_STATE");
+            List<Note> newNotes = new ArrayList<>();
+            List<Pin> newPins = new ArrayList<>();
             
-            System.out.println("Parsing line: " + line);
-            
-            // Parse NOTE format from server: "NOTE x,y,color,content,isPinned"
-            if (line.startsWith("NOTE")) {
-                try {
-                    // Format: "NOTE x,y,color,content,isPinned"
-                    String data = line.substring(5);
-                    String[] parts = data.split(" ");
-                    if (parts.length >= 5) {
-                        int x = Integer.parseInt(parts[0]);
-                        int y = Integer.parseInt(parts[1]);
-                        String color = parts[2];
-                        StringBuilder messageBuilder = new StringBuilder();
-                        for (int i = 3; i < parts.length - 1; i++) {
-                            messageBuilder.append(parts[i]);
-                            if (i < parts.length - 2) messageBuilder.append(" ");
-                        }
-                        String message = messageBuilder.toString();
-                        boolean pinned = Boolean.parseBoolean(parts[parts.length - 1]);
-                        board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
-                        System.out.println("Added note: " + message + " at (" + x + "," + y + ")");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error parsing note: " + line);
+            String line;
+            while ((line = read.readLine()) != null) {
+                line = line.trim();
+                System.out.println("SHAKE_STATE line: " + line);
+                
+                if (line.isEmpty()) {
+                    break;
                 }
-            } 
-            // Parse PIN format: "PIN x y"
-            else if (line.startsWith("PIN")) {
-                try {
-                    String[] parts = line.split(" ");
-                    if (parts.length == 3) {
-                        int x = Integer.parseInt(parts[1]);
-                        int y = Integer.parseInt(parts[2]);
-                        board.pins.add(new Pin(x, y));
-                        System.out.println("Added pin at (" + x + "," + y + ")");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error parsing pin: " + line);
+                
+                if (line.startsWith("NOTE")) {
+                    parseNoteLine(line, newNotes);
+                } else if (line.startsWith("PIN")) {
+                    parsePinLine(line, newPins);
+                } else if (line.equals("NO_NOTES")) {
+                    break;
                 }
             }
-            // Handle "NO_NOTES" response
-            else if (line.equals("NO_NOTES")) {
-                board.notes.clear();
-            }
+            
+            updateNotesWithPins(newNotes, newPins);
+            
+            System.out.println("SHAKE complete - Board now has " + newNotes.size() + " notes and " + newPins.size() + " pins");
+            
+        } catch (IOException e) {
+            System.err.println("Error parsing SHAKE_STATE: " + e.getMessage());
         }
-        
-        // Update pinned status for notes based on pins
-        for (Note note : board.notes) {
+    }
+    
+    private void updateNotesWithPins(List<Note> newNotes, List<Pin> newPins) {
+        // Update pinned status based on pins
+        for (Note note : newNotes) {
             boolean isPinned = false;
-            for (Pin pin : board.pins) {
-                if (pin.getX() == note.getX() && pin.getY() == note.getY()) {
+            for (Pin pin : newPins) {
+                if (note.containsPoint(pin.getX(), pin.getY())) {
                     isPinned = true;
                     break;
                 }
             }
-            if (!note.isPinned()) {
-                note.setPinned(isPinned);
-            }
+            note.setPinned(isPinned);
         }
-        board.repaint();
-        System.out.println("Parsed " + board.notes.size() + " notes and " + board.pins.size() + " pins");
-    }
-	
-	
-	@Override
-	public void run() {
-		try {
-			read = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			write = new PrintWriter(socket.getOutputStream(), true);
-
-			handshake = read.readLine();
-						
-			String recv;
-			while(connectionStatus) {	
-				recv = read.readLine();
-				System.out.println("GOT MESSAGE :"+ recv);
-				processCommand(recv);
-				
-			}
-			
-		} catch(IOException e) {
-			ClientGUI.guiError("ERROR : Could not recieve data from server");
-		}
-	}
-	
-	private void processNoteCommand(String []parts) {
+        
+        final List<Note> finalNotes = newNotes;
+        final List<Pin> finalPins = newPins;
+        
         SwingUtilities.invokeLater(() -> {
-            try {
-                // Protocol: NOTE x y color Word1 Word2 ... WordN pinnedStatus
-                if (parts.length >= 6) { // Ensure we have at least x, y, color, message, boolean
-                    int x = Integer.parseInt(parts[1]);
-                    int y = Integer.parseInt(parts[2]);
-                    String color = parts[3];
-                    StringBuilder messageBuilder = new StringBuilder();
-                    for (int i = 4; i < parts.length - 1; i++) {
-                        messageBuilder.append(parts[i]);
-                        // Add space between words, but not after last word
-                        if (i < parts.length - 2) {
-                            messageBuilder.append(" ");
-                        }
-                    }
-                    String message = messageBuilder.toString();
-                    boolean pinned = Boolean.parseBoolean(parts[parts.length - 1]);
-                    board.notes.removeIf(note -> note.getX() == x && note.getY() == y);
-                    // Add new note with pin status
-                    board.notes.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
-                    board.repaint();
-                    System.out.println("Processed NOTE: " + message + " (Pinned: " + pinned + ")");
-                }
-            } catch (Exception e) {
-                System.err.println("Error processing NOTE command: " + String.join(" ", parts));
-                e.printStackTrace();
-            }
+            board.updateBoard(finalNotes, finalPins);
         });
     }
-	
-	private void processPinCommand(String []parts) {
+    
+    private void parseNoteLine(String line, List<Note> notesList) {
         try {
+            String data = line.substring(5).trim();
+            String[] parts = data.split(" ");
+            
+            if (parts.length >= 5) {
+                int x = Integer.parseInt(parts[0]);
+                int y = Integer.parseInt(parts[1]);
+                String color = parts[2];
+                
+                boolean pinned = Boolean.parseBoolean(parts[parts.length - 1]);
+                
+                StringBuilder msg = new StringBuilder();
+                for (int i = 3; i < parts.length - 1; i++) {
+                    if (i > 3) msg.append(" ");
+                    msg.append(parts[i]);
+                }
+                String message = msg.toString();
+                
+                notesList.add(new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned));
+                System.out.println("Parsed note: '" + message + "' at (" + x + "," + y + ") pinned=" + pinned);
+            }
+        } catch (Exception e) {
+            System.err.println("Error parsing note line: " + line);
+            e.printStackTrace();
+        }
+    }
+    
+    private void parsePinLine(String line, List<Pin> pinsList) {
+        try {
+            String[] parts = line.split(" ");
             if (parts.length == 3) {
                 int x = Integer.parseInt(parts[1]);
                 int y = Integer.parseInt(parts[2]);
-                
-                // Add pin
-                board.pins.add(new Pin(x, y));
-                
-                // Update any note at this position to be pinned
-                for (Note note : board.notes) {
-                    if (note.getX() == x && note.getY() == y) {
-                        note.setPinned(true);
-                    }
-                }
-                
-                System.out.println("Processed PIN command at (" + x + "," + y + ")");
+                pinsList.add(new Pin(x, y));
+                System.out.println("Parsed pin at (" + x + "," + y + ")");
             }
         } catch (Exception e) {
-            System.err.println("Error processing PIN command: " + String.join(" ", parts));
+            System.err.println("Error parsing pin line: " + line);
         }
-
-		
-	}
-	
-	private void processUnpinCommand(String []parts) {
-        try {
-            if (parts.length == 3) {
-                int x = Integer.parseInt(parts[1]);
-                int y = Integer.parseInt(parts[2]);
-                
-                // Remove pin
-                board.pins.removeIf(pin -> pin.getX() == x && pin.getY() == y);
-                
-                // Update any note at this position to be unpinned
-                for (Note note : board.notes) {
-                    if (note.getX() == x && note.getY() == y) {
-                        note.setPinned(false);
-                    }
-                }
-                
-                System.out.println("Processed UNPIN command at (" + x + "," + y + ")");
-            }
-        } catch (Exception e) {
-            System.err.println("Error processing UNPIN command: " + String.join(" ", parts));
-        }
-	}
-	
-	private void processClearCommand() {
-		board.notes.clear();
-		board.pins.clear();
-        SwingUtilities.invokeLater(() -> {
-            board.repaint();
-            System.out.println("Board Cleared");
-        });
-	}
-	
-	
-	public void processCommand(String recv) {
-		if (recv == null || recv.trim().isEmpty()) {
+    }
+    
+    public void processCommand(String recv) {
+        if (recv == null || recv.trim().isEmpty()) {
             return;
         }
-		String[] parts = recv.split(" ");
-		String cmd = parts[0].toUpperCase();
-		
-	    switch(cmd) {
-        case "OK":
-            System.out.println("Operation successful: " + recv);
-            if (recv.contains("CLEAR_COMPLETE")) {
-                processClearCommand();
+        
+        String[] parts = recv.split(" ");
+        String cmd = parts[0].toUpperCase();
+        
+        switch(cmd) {
+            case "OK":
+                System.out.println("Server OK: " + recv);
+                break;
+                
+            case "ERROR":
+                System.err.println("Server error: " + recv);
+                final String errorMsg = recv;
+                SwingUtilities.invokeLater(() -> {
+                    ClientGUI.guiError("Server Error: " + errorMsg);
+                });
+                break;
+                
+            case "NOTE":
+                if (recv.startsWith("NOTE ")) {
+                    handleNoteUpdate(parts);
+                } else {
+                    parseGetResponse();
+                }
+                break;
+                
+            case "PIN":
+                handlePinUpdate(parts);
+                break;
+                
+            case "UNPIN":
+                handleUnpinUpdate(parts);
+                break;
+                
+            case "CLEAR":
+                SwingUtilities.invokeLater(() -> {
+                    board.clearBoard();
+                });
+                break;
+                
+            case "SHAKE_STATE":
+                // ATOMIC
+                System.out.println("Received ATOMIC SHAKE_STATE");
+                parseShakeState();
+                break;
+                
+            case "NO_NOTES":
+                SwingUtilities.invokeLater(() -> {
+                    board.updateBoard(new ArrayList<>(), new ArrayList<>());
+                });
+                break;
+        }
+    }
+    
+    private void handleNoteUpdate(String[] parts) {
+        try {
+            if (parts.length >= 6) {
+                int x = Integer.parseInt(parts[1]);
+                int y = Integer.parseInt(parts[2]);
+                String color = parts[3];
+                
+                boolean pinned = Boolean.parseBoolean(parts[parts.length - 1]);
+                
+                StringBuilder msg = new StringBuilder();
+                for (int i = 4; i < parts.length - 1; i++) {
+                    if (i > 4) msg.append(" ");
+                    msg.append(parts[i]);
+                }
+                String message = msg.toString();
+                
+                final Note newNote = new Note(x, y, board.noteWidth, board.noteHeight, color, message, pinned);
+                
+                SwingUtilities.invokeLater(() -> {
+                    board.notes.removeIf(n -> n.getX() == newNote.getX() && n.getY() == newNote.getY());
+                    board.notes.add(newNote);
+                    board.repaint();
+                });
+                
+                System.out.println("Added/updated note: '" + message + "' at (" + x + "," + y + ")");
             }
-            break;
-        case "CLEAR":
-            // Process CLEAR command from server
-            processClearCommand();
-            break;
-        case "ERROR":
-            System.err.println("Server error: " + recv);
-            break;
-        case "NOTE":
-            // Process NOTE command from server
-            processNoteCommand(parts);
-            break;
-        case "PIN":
-            // Process PIN command from server
-            processPinCommand(parts);
-            break;
-        case "UNPIN":
-            // Process UNPIN command from server
-            processUnpinCommand(parts);
-            break;
-	    }
-	}
-	
-	public String getHandshake() {
-		return handshake;
-	}
-	
-	public void setBoardPanel(BoardPanel board) {
-		this.board = board;
-	}
+        } catch (Exception e) {
+            System.err.println("Error handling note update");
+            e.printStackTrace();
+        }
+    }
+    
+    private void handlePinUpdate(String[] parts) {
+        try {
+            if (parts.length == 3) {
+                int x = Integer.parseInt(parts[1]);
+                int y = Integer.parseInt(parts[2]);
+                
+                final Pin newPin = new Pin(x, y);
+                
+                SwingUtilities.invokeLater(() -> {
+                    if (!board.pins.contains(newPin)) {
+                        board.pins.add(newPin);
+                    }
+                    
+                    for (Note note : board.notes) {
+                        if (note.containsPoint(x, y)) {
+                            note.setPinned(true);
+                        }
+                    }
+                    board.repaint();
+                });
+                
+                System.out.println("Added pin at (" + x + "," + y + ")");
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling pin update");
+        }
+    }
+    
+    private void handleUnpinUpdate(String[] parts) {
+        try {
+            if (parts.length == 3) {
+                int x = Integer.parseInt(parts[1]);
+                int y = Integer.parseInt(parts[2]);
+                
+                SwingUtilities.invokeLater(() -> {
+                    board.pins.removeIf(p -> p.getX() == x && p.getY() == y);
+                    
+                    for (Note note : board.notes) {
+                        if (note.containsPoint(x, y)) {
+                            boolean stillPinned = false;
+                            for (Pin pin : board.pins) {
+                                if (note.containsPoint(pin.getX(), pin.getY())) {
+                                    stillPinned = true;
+                                    break;
+                                }
+                            }
+                            note.setPinned(stillPinned);
+                        }
+                    }
+                    board.repaint();
+                });
+                
+                System.out.println("Removed pin at (" + x + "," + y + ")");
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling unpin update");
+        }
+    }
+    
+    public String getHandshake() {
+        return handshake;
+    }
+    
+    public void setBoardPanel(BoardPanel board) {
+        this.board = board;
+    }
 }

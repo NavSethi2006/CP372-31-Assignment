@@ -70,15 +70,13 @@ public class ControlPanel extends JPanel{
         }
         
         // Special colors for dangerous operations
-        shakeButton.setBackground(new Color(178, 34, 34)); // Firebrick
-        clearButton.setBackground(new Color(178, 34, 34)); // Firebrick
-        
-        // Zoom buttons different color
-        zoomInButton.setBackground(new Color(34, 139, 34)); // Forest green
-        zoomOutButton.setBackground(new Color(34, 139, 34)); // Forest green
-        resetViewButton.setBackground(new Color(72, 61, 139)); // Dark slate blue
+        shakeButton.setBackground(new Color(178, 34, 34)); 
+        clearButton.setBackground(new Color(178, 34, 34)); 
+        zoomInButton.setBackground(new Color(34, 139, 34)); 
+        zoomOutButton.setBackground(new Color(34, 139, 34)); 
+        resetViewButton.setBackground(new Color(72, 61, 139)); 
     }
-    
+
     // Getter methods for buttons
     public JButton getPostButton() { return postButton; }
     public JButton getGetButton() { return getButton; }

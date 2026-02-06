@@ -24,17 +24,13 @@ public class BoardPanel extends JPanel{
 
     private float scale = 3.0f;
     
-    // Data collections
+   
     public List<Note> notes = new ArrayList<>();
     public List<Pin> pins = new ArrayList<>();
-    
-    // Colors
     private final Color BOARD_COLOR = new Color(245, 245, 220); // Light beige
     private final Color GRID_COLOR = new Color(220, 220, 200);
     private final Color BORDER_COLOR = new Color(139, 69, 19); // Brown
     private final Color PIN_COLOR = new Color(220, 20, 60); // Crimson red
-  
-    
     // Mouse interaction
     private Point dragStart = null;
     private Point boardOffset = new Point(20, 20); // Offset from panel edges
@@ -59,8 +55,6 @@ public class BoardPanel extends JPanel{
     	
         setOpaque(false); // Transparent background
         setPreferredSize(new Dimension(800, 600));
-        
-        // Enable mouse interaction for dragging/panning
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(java.awt.event.MouseEvent e) {
@@ -98,7 +92,7 @@ public class BoardPanel extends JPanel{
                 // Zoom out
                 scale /= zoomFactor;
             }
-            scale = Math.max(0.5f, Math.min(scale, 10.0f)); // Clamp between 0.5 and 10
+            scale = Math.max(0.5f, Math.min(scale, 10.0f)); 
             repaint();
         });
     }
@@ -109,20 +103,16 @@ public class BoardPanel extends JPanel{
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-        
-        // Enable anti-aliasing for smoother graphics
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         
         // Get panel dimensions
         int panelWidth = getWidth();
         int panelHeight = getHeight();
-        
-        // Calculate board dimensions with scale
+
         float scaledBoardWidth = boardWidth * scale;
         float scaledBoardHeight = boardHeight * scale;
-        
-        // Draw subtle gradient background for the entire panel
+      
         GradientPaint bgGradient = new GradientPaint(
             0, 0, new Color(240, 245, 255),
             panelWidth, panelHeight, new Color(220, 230, 245)
@@ -139,12 +129,9 @@ public class BoardPanel extends JPanel{
             (int) scaledBoardHeight, 
             10, 10
         );
-        
-        // Draw board background with texture
+
         drawBoardBackground(g2d, boardOffset.x, boardOffset.y, 
                            (int) scaledBoardWidth, (int) scaledBoardHeight);
-        
-        // Draw subtle grid lines
         drawGrid(g2d, boardOffset.x, boardOffset.y, 
                 (int) scaledBoardWidth, (int) scaledBoardHeight);
         
@@ -158,7 +145,7 @@ public class BoardPanel extends JPanel{
             drawPin(g2d, pin);
         }
         
-        // Draw board border with wood texture effect
+        // Draw board border
         drawBoardBorder(g2d, boardOffset.x, boardOffset.y, 
                        (int) scaledBoardWidth, (int) scaledBoardHeight);
         
@@ -167,16 +154,13 @@ public class BoardPanel extends JPanel{
     }
     
     private void drawBoardBackground(Graphics2D g2d, int x, int y, int width, int height) {
-        // Corkboard texture effect
         g2d.setColor(BOARD_COLOR);
         g2d.fillRoundRect(x, y, width, height, 8, 8);
-        
-        // Add subtle texture dots
         g2d.setColor(new Color(220, 210, 180));
         int dotSpacing = (int)(10 * scale);
         for (int dx = x + dotSpacing; dx < x + width; dx += dotSpacing) {
             for (int dy = y + dotSpacing; dy < y + height; dy += dotSpacing) {
-                if (Math.random() > 0.7) { // Random dots
+                if (Math.random() > 0.7) { 
                     int dotSize = (int)(1 * scale);
                     g2d.fillOval(dx, dy, dotSize, dotSize);
                 }
@@ -188,13 +172,11 @@ public class BoardPanel extends JPanel{
         g2d.setColor(GRID_COLOR);
         g2d.setStroke(new BasicStroke(0.5f));
         
-        // Vertical lines every 10 units
         for (int i = 0; i <= boardWidth; i += 10) {
             int lineX = x + (int)(i * scale);
             g2d.drawLine(lineX, y, lineX, y + height);
         }
         
-        // Horizontal lines every 10 units
         for (int i = 0; i <= boardHeight; i += 10) {
             int lineY = y + (int)(i * scale);
             g2d.drawLine(x, lineY, x + width, lineY);
@@ -255,8 +237,7 @@ public class BoardPanel extends JPanel{
         Font font = new Font("SansSerif", Font.PLAIN, Math.max(4, (int)(4 * scale)));
         g2d.setFont(font);
         FontMetrics fm = g2d.getFontMetrics();
-        
-        // Split text into lines that fit within note width
+    
         List<String> lines = new ArrayList<>();
         String[] words = message.split(" ");
         StringBuilder currentLine = new StringBuilder();
@@ -275,14 +256,12 @@ public class BoardPanel extends JPanel{
         if (currentLine.length() > 0) {
             lines.add(currentLine.toString());
         }
-        
-        // Limit to 3 lines maximum
+        // Three lines maximum
         if (lines.size() > 3) {
             lines = lines.subList(0, 3);
             lines.set(2, lines.get(2) + "...");
         }
-        
-        // Draw each line centered
+    
         g2d.setColor(Color.BLACK);
         int lineHeight = fm.getHeight();
         int totalTextHeight = lineHeight * lines.size();
@@ -299,8 +278,6 @@ public class BoardPanel extends JPanel{
         // Draw a small pushpin
         g2d.setColor(new Color(184, 134, 11)); // Golden rod
         g2d.fillOval(x - (int)(2 * scale), y, (int)(4 * scale), (int)(4 * scale));
-        
-        // Pin shaft
         g2d.setColor(new Color(160, 120, 10));
         g2d.fillRect(x - (int)(0.5 * scale), y + (int)(4 * scale), 
                     (int)(1 * scale), (int)(6 * scale));
@@ -310,36 +287,29 @@ public class BoardPanel extends JPanel{
         int pinX = boardOffset.x + (int)(pin.getX() * scale);
         int pinY = boardOffset.y + (int)(pin.getY() * scale);
         int pinSize = (int)(6 * scale);
-        
-        // Draw pin with shine effect
+    
         GradientPaint pinGradient = new GradientPaint(
             pinX - pinSize/2, pinY - pinSize/2, PIN_COLOR,
             pinX + pinSize/2, pinY + pinSize/2, PIN_COLOR.darker()
         );
         g2d.setPaint(pinGradient);
         g2d.fillOval(pinX - pinSize/2, pinY - pinSize/2, pinSize, pinSize);
-        
-        // Draw pin highlight
         g2d.setColor(new Color(255, 255, 255, 150));
         g2d.fillOval(pinX - pinSize/4, pinY - pinSize/4, pinSize/2, pinSize/2);
-        
-        // Draw pin outline
+ 
         g2d.setColor(Color.BLACK);
         g2d.setStroke(new BasicStroke(0.5f));
         g2d.drawOval(pinX - pinSize/2, pinY - pinSize/2, pinSize, pinSize);
     }
     
     private void drawBoardBorder(Graphics2D g2d, int x, int y, int width, int height) {
-        // Draw wood texture border
-        Color woodColor1 = new Color(139, 69, 19); // Saddle brown
-        Color woodColor2 = new Color(160, 82, 45); // Sienna
-        
-        // Outer border
+        Color woodColor1 = new Color(139, 69, 19); 
+        Color woodColor2 = new Color(160, 82, 45); 
+
         g2d.setColor(woodColor1);
         g2d.setStroke(new BasicStroke(4));
         g2d.drawRoundRect(x - 2, y - 2, width + 4, height + 4, 10, 10);
-        
-        // Inner border with wood grain effect
+   
         g2d.setColor(woodColor2);
         g2d.setStroke(new BasicStroke(2));
         g2d.drawRoundRect(x, y, width, height, 8, 8);
@@ -404,7 +374,7 @@ public class BoardPanel extends JPanel{
         g2d.drawString(instructions, instX, instY);
     }
     
-    // ================ PUBLIC METHODS ================
+    // PUBLIC METHODS 
     
 
     
@@ -414,7 +384,6 @@ public class BoardPanel extends JPanel{
         this.notes = new ArrayList<>(notes);
         this.pins = new ArrayList<>(pins);
         
-        // Trigger repaint on EDT
         SwingUtilities.invokeLater(this::repaint);
     }
 
@@ -483,15 +452,13 @@ public class BoardPanel extends JPanel{
         this.scale = Math.max(0.5f, Math.min(scale, 10.0f));
         repaint();
     }
-    
-    // Utility method to convert screen coordinates to board coordinates
+
     public Point screenToBoard(Point screenPoint) {
         int boardX = (int)((screenPoint.x - boardOffset.x) / scale);
         int boardY = (int)((screenPoint.y - boardOffset.y) / scale);
         return new Point(boardX, boardY);
     }
-    
-    // Utility method to convert board coordinates to screen coordinates
+
     public Point boardToScreen(Point boardPoint) {
         int screenX = boardOffset.x + (int)(boardPoint.x * scale);
         int screenY = boardOffset.y + (int)(boardPoint.y * scale);

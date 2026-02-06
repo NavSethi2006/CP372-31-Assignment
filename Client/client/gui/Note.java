@@ -17,10 +17,8 @@ public class Note {
 		case "green": return Color.GREEN;
 		case "blue": return Color.BLUE;
 		case "yellow": return Color.YELLOW;
-		case "orange": return Color.ORANGE;
 		case "pink": return Color.PINK;
 		case "cyan": return Color.CYAN;
-		case "magenta": return Color.MAGENTA;
 		case "white": return Color.WHITE;
 		case "gray": return Color.GRAY;
 		default : return Color.LIGHT_GRAY;

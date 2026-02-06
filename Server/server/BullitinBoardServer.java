@@ -15,8 +15,7 @@ import server.net.Server;
 
 public class BullitinBoardServer {
 
-	
-	// help print for which the server admin can use to pick and choose what to define
+
 	public static String helpprint()
 	{
 		return "arg 1: port definition, default 80"
@@ -24,7 +23,6 @@ public class BullitinBoardServer {
 			+  "arg 3: board height, default 300";
 	}
 	
-	// main method, based on arguments specified, align server to meet needs such as port specification
 	public static void main(String []args) {
 		
 		int port = 8080;

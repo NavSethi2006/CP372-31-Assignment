@@ -18,14 +18,21 @@ public class Pin {
 	public boolean isInsideNote(Note note) {
 		return note.containsPoint(x, y);
 	}
+	
 	public String toProtocol() {
 		return String.format("PIN %d %d", x, y);
 	}
 	
 	@Override
-	public int hashCode() {
-		return Objects.hash(x,y);
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Pin pin = (Pin) o;
+		return x == pin.x && y == pin.y;
 	}
- 	
-
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(x, y);
+	}
 }

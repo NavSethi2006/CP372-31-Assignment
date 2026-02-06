@@ -23,19 +23,19 @@ public class Board {
 		this.noteWidth = noteWidth;
 		this.noteHeight = noteHeight;
 		
-		// valid colors for now
 		validColors = new ArrayList<String>();
-		validColors.add("Red");
-		validColors.add("Blue");
-		validColors.add("Green");
-		validColors.add("Yellow");
+		validColors.add("red");
+		validColors.add("blue");
+		validColors.add("green");
+		validColors.add("yellow");
+		validColors.add("white");
+		validColors.add("pink");
+		validColors.add("cyan");
 		
 		notes = new ArrayList<Note>();
 		pins = new HashSet<Pin>();
 	}
-	
 
-	// helper function
     private boolean isNotePinned(Note note) {
         for (Pin pin : pins) {
             if (pin.isInsideNote(note)) {
@@ -48,7 +48,8 @@ public class Board {
 	public String POSTnote(int x, int y, String Color, String message) {
 		lock.lock();
 		try {
-			if(validColors.contains(Color.toLowerCase())) {
+			// Check if color is valid (case-insensitive)
+			if(!validColors.contains(Color.toLowerCase())) {
 				return "ERROR COLOR_NOT_SUPPORTED " + Color + " is not a valid color";
 			}
 			Note note = new Note(x, y, Color, message, noteWidth, noteHeight);
@@ -72,12 +73,26 @@ public class Board {
 		lock.lock();
 		
 		try {
+			boolean insideAnyNote = false;
+			for(Note note: notes) {
+				if(note.containsPoint(x, y)) {
+					insideAnyNote = true;
+					break;
+				}
+			}
+			
+			// If not inside any note, reject
+			if(!insideAnyNote) {
+				return "ERROR PIN_NOT_IN_NOTE x:"+x+" y:"+y+" is not inside any note";
+			}
+			
+			// Check if pin already exists at this location
 			Pin newPin = new Pin(x, y);
 			if (pins.contains(newPin)) {
 				return "ERROR PIN_ALREADY_EXISTS x:" + x + " y:" + y;
 			}
 
-			pins.add(new Pin(x,y));
+			pins.add(newPin);
 			return "OK PIN_ADDED";
 			
 		} finally {
@@ -88,7 +103,7 @@ public class Board {
 	public String removePin(int x, int y) {
 		lock.lock();
 		try {
-			Pin pintoremove = new Pin(x,y);
+			Pin pintoremove = new Pin(x, y);
 			if(pins.remove(pintoremove)) {
 				return "OK PIN_REMOVED";
 			} else {
@@ -104,7 +119,7 @@ public class Board {
 		lock.lock();
 		try {
 			List<Note> notestokeep = new ArrayList<Note>();
-			for(Note note : notes ) {
+			for(Note note : notes) {
 				if(isNotePinned(note)) {
 					notestokeep.add(note);
 				}
@@ -112,7 +127,7 @@ public class Board {
 			notes.clear();
 			notes.addAll(notestokeep);
 			return "OK SHAKE_COMPLETE";
-		}finally {
+		} finally {
 			lock.unlock();
 		}
 	}
@@ -129,30 +144,37 @@ public class Board {
 	}
 	
 	public String getAllNotes() {
-			
+		lock.lock();
+		try {
 			StringBuilder allNotesResponse = new StringBuilder();
 			if(!notes.isEmpty()) {
-			for(Note note : notes) {
-				allNotesResponse.append(note.toProtocolString(isNotePinned(note)));
-				allNotesResponse.append("\n");
-			}
+				for(Note note : notes) {
+					allNotesResponse.append(note.toProtocolString(isNotePinned(note)));
+					allNotesResponse.append("\n");
+				}
 			} else {
-				allNotesResponse.append("NO_NOTES");
+				allNotesResponse.append("NO_NOTES\n");
 			}
 			return allNotesResponse.toString();
+		} finally {
+			lock.unlock();
+		}
 	}
+	
 	public String getAllPins() {
+		lock.lock();
+		try {
 			StringBuilder allPinsResponse = new StringBuilder();
 			if(!pins.isEmpty()) {
-			for(Pin pin: pins) {
-				allPinsResponse.append(pin.toProtocol());
-				allPinsResponse.append("\n");
-			}
-			} else {
-				allPinsResponse.append(" ");
+				for(Pin pin: pins) {
+					allPinsResponse.append(pin.toProtocol());
+					allPinsResponse.append("\n");
+				}
 			}
 			return allPinsResponse.toString();
-			
+		} finally {
+			lock.unlock();
+		}
 	}
 	
 	public String getNotes(Integer containsX, Integer containsY, String refersTo) {
@@ -175,7 +197,6 @@ public class Board {
 			
 			return res.toString();
 		} finally {
-			
 			lock.unlock();
 		}
 	}
@@ -218,6 +239,4 @@ public class Board {
         	lock.unlock();
     	}
 	}
-
-
 }

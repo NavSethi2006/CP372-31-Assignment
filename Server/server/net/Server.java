@@ -5,7 +5,6 @@
  * Description : Gateway to main code
  * 
  */
-
 package server.net;
 
 import java.io.IOException;
@@ -17,73 +16,83 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import server.gui.Board;
 
-
-// Server class and gateway to main code
 public class Server {
-	
-	private ServerSocket server;
-	private int port;
-	private boolean ServerIsAlive;
-	private ArrayList<Socket> clientsockets = new ArrayList<Socket>();
-	private ServerAdmin admin;
-	private Board tempboard;
-		
-	// Server constructor, takes in port
-	public Server(int port, Board board) {
-		this.port = port;
-		tempboard = board;
-	}
-	
-	/* 
-	 *  Server start, constructs ServerAdmin, ServerSocket,
-	 *  While ServerIsAlive is true, the clients sockets connecting to the server will
-	 *	constantly be listened too, once a client is found it will open a new thread to 
-	 *	ClientHandler, this allows us to have multiple clients in one server
-	 */
-	 
-	public void Start() {
-		try {
-			try {
-			server = new ServerSocket(port);
-			} catch(BindException e) {
-				System.err.println("Something went wrong with opening the socket. You may not have permissions, try again later");
-				System.exit(1);
-			}
-			ServerIsAlive = true;
-			
-			System.out.println("Server running on\nIP ADDRESS: "+server.getInetAddress().getHostAddress()+"\n"
-					+ "on PORT: "+ server.getLocalPort());
-			
-			admin = new ServerAdmin(server);
-			admin.start();
+    
+    private ServerSocket server;
+    private int port;
+    private boolean ServerIsAlive;
+    private List<ClientHandler> clients = new ArrayList<>(); //Store ClientHandler instead of Socket
+    private ServerAdmin admin;
+    private Board tempboard;
+        
+    public Server(int port, Board board) {
+        this.port = port;
+        tempboard = board;
+    }
+    
+    // Broadcast method
+    public synchronized void broadcast(String message) {
+        System.out.println("Broadcasting to " + clients.size() + " clients: " + message);
+        List<ClientHandler> disconnected = new ArrayList<>();
+        
+        for (ClientHandler client : clients) {
+            try {
+                client.send(message);
+            } catch (Exception e) {
+                System.err.println("Failed to send to client, marking for removal");
+                disconnected.add(client);
+            }
+        }
+        
+        clients.removeAll(disconnected);
+    }
+    
+    // Remove client method
+    public synchronized void removeClient(ClientHandler client) {
+        clients.remove(client);
+        System.out.println("Client removed. Total clients: " + clients.size());
+    }
+     
+    public void Start() {
+        try {
+            try {
+                server = new ServerSocket(port);
+            } catch(BindException e) {
+                System.err.println("Something went wrong with opening the socket. You may not have permissions, try again later");
+                System.exit(1);
+            }
+            ServerIsAlive = true;
+            
+            System.out.println("Server running on\nIP ADDRESS: "+server.getInetAddress().getHostAddress()+"\n"
+                    + "on PORT: "+ server.getLocalPort());
+            
+            admin = new ServerAdmin(server);
+            admin.start();
 
-			System.out.println("Clients can connect using the IP address(es) : "+ getMainLANIP());
-			
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-	               System.out.println("\nShutting down server...");
-	               stopServer();
-	        }));
-			
-			
-			while(ServerIsAlive) {
-				Socket clientSocket = server.accept();
-				clientsockets.add(clientSocket);
-				System.out.println("Accepted client from IP : "+ clientSocket.getInetAddress().getHostAddress()+":"+clientSocket.getPort());
-				ClientHandler client = new ClientHandler(clientSocket, tempboard);
-				admin.update_clients(clientsockets);
-				client.start();
-			}
-			
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
-	
+            System.out.println("Clients can connect using the IP address(es) : "+ getMainLANIP());
+            
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                   System.out.println("\nShutting down server...");
+                   stopServer();
+            }));
+            
+            while(ServerIsAlive) {
+                Socket clientSocket = server.accept();
+                System.out.println("Accepted client from IP : "+ clientSocket.getInetAddress().getHostAddress()+":"+clientSocket.getPort());
+                ClientHandler client = new ClientHandler(clientSocket, tempboard, this); 
+                clients.add(client);
+                client.start();
+            }
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
     public void stopServer() {
         ServerIsAlive = false;
         try {
@@ -96,14 +105,13 @@ public class Server {
         }
     }
 
-	private String getMainLANIP() {
+    private String getMainLANIP() {
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             
             while (interfaces.hasMoreElements()) {
                 NetworkInterface ni = interfaces.nextElement();
                 
-                // Skip loopback and inactive interfaces
                 if (ni.isLoopback() || !ni.isUp()) {
                     continue;
                 }
@@ -112,30 +120,15 @@ public class Server {
                 while (addresses.hasMoreElements()) {
                     InetAddress addr = addresses.nextElement();
                     
-                    // Only IPv4 addresses
                     if (addr instanceof Inet4Address) {
                         String ip = addr.getHostAddress();
                         
-                        // Check if it's in private LAN range
                         if (ip.startsWith("192.168.") || 
                             ip.startsWith("10.") || 
-                            ip.startsWith("172.16.") ||
-                            ip.startsWith("172.17.") ||
-                            ip.startsWith("172.18.") ||
-                            ip.startsWith("172.19.") ||
-                            ip.startsWith("172.20.") ||
-                            ip.startsWith("172.21.") ||
-                            ip.startsWith("172.22.") ||
-                            ip.startsWith("172.23.") ||
-                            ip.startsWith("172.24.") ||
-                            ip.startsWith("172.25.") ||
-                            ip.startsWith("172.26.") ||
-                            ip.startsWith("172.27.") ||
-                            ip.startsWith("172.28.") ||
-                            ip.startsWith("172.29.") ||
-                            ip.startsWith("172.30.") ||
-                            ip.startsWith("172.31.")) {
-                            return ip; // Return the first LAN IP found
+                            (ip.startsWith("172.") && 
+                             Integer.parseInt(ip.split("\\.")[1]) >= 16 && 
+                             Integer.parseInt(ip.split("\\.")[1]) <= 31)) {
+                            return ip;
                         }
                     }
                 }
@@ -143,7 +136,6 @@ public class Server {
         } catch (Exception e) {
             System.err.println("Error getting LAN IP: " + e.getMessage());
         }
-        return null; // No LAN IP found
+        return null;
     }
 }
-
