@@ -25,7 +25,7 @@ public class Server {
     private ServerSocket server;
     private int port;
     private boolean ServerIsAlive;
-    private List<ClientHandler> clients = new ArrayList<>(); //Store ClientHandler instead of Socket
+    private List<ClientHandler> clients = new ArrayList<>();
     private ServerAdmin admin;
     private Board tempboard;
         
@@ -34,9 +34,8 @@ public class Server {
         tempboard = board;
     }
     
-    // Broadcast method
     public synchronized void broadcast(String message) {
-        System.out.println("Broadcasting to " + clients.size() + " clients: " + message);
+        System.out.println(clients.size() + " clients: " + message);
         List<ClientHandler> disconnected = new ArrayList<>();
         
         for (ClientHandler client : clients) {
@@ -51,7 +50,6 @@ public class Server {
         clients.removeAll(disconnected);
     }
     
-    // Remove client method
     public synchronized void removeClient(ClientHandler client) {
         clients.remove(client);
         System.out.println("Client removed. Total clients: " + clients.size());
