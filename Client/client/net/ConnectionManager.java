@@ -254,6 +254,10 @@ public class ConnectionManager extends Thread{
 	private void processClearCommand() {
 		board.notes.clear();
 		board.pins.clear();
+        SwingUtilities.invokeLater(() -> {
+            board.repaint();
+            System.out.println("Board Cleared");
+        });
 	}
 	
 	
@@ -267,6 +271,13 @@ public class ConnectionManager extends Thread{
 	    switch(cmd) {
         case "OK":
             System.out.println("Operation successful: " + recv);
+            if (recv.contains("CLEAR_COMPLETE")) {
+                processClearCommand();
+            }
+            break;
+        case "CLEAR":
+            // Process CLEAR command from server
+            processClearCommand();
             break;
         case "ERROR":
             System.err.println("Server error: " + recv);
@@ -282,10 +293,6 @@ public class ConnectionManager extends Thread{
         case "UNPIN":
             // Process UNPIN command from server
             processUnpinCommand(parts);
-            break;
-        case "CLEAR":
-            // Process CLEAR command from server
-            processClearCommand();
             break;
 	    }
 	}

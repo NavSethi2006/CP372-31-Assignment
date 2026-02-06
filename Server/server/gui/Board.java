@@ -72,17 +72,11 @@ public class Board {
 		lock.lock();
 		
 		try {
-			boolean insideAnyNote = false;
-			for(Note note: notes) {
-				if(note.containsPoint(x, y)) {
-					insideAnyNote = true;
-					break;
-				}
+			Pin newPin = new Pin(x, y);
+			if (pins.contains(newPin)) {
+				return "ERROR PIN_ALREADY_EXISTS x:" + x + " y:" + y;
 			}
-			
-			if(insideAnyNote) {
-				return "ERROR PIN_OVERLAP_WITH_NOTE x:"+x+" y:"+y+" already has a note associated with that position";
-			}
+
 			pins.add(new Pin(x,y));
 			return "OK PIN_ADDED";
 			
@@ -94,16 +88,15 @@ public class Board {
 	public String removePin(int x, int y) {
 		lock.lock();
 		try {
-		Pin pintoremove = new Pin(x,y);
-		if(pins.contains(pintoremove)) {
-			pins.remove(pintoremove);
-			return "OK PIN_REMOVED";
-		} else {
-			return "ERROR PIN_NOT_FOUND No pin at this location exists";
-		}
+			Pin pintoremove = new Pin(x,y);
+			if(pins.remove(pintoremove)) {
+				return "OK PIN_REMOVED";
+			} else {
+				return "ERROR PIN_NOT_FOUND No pin at this location exists";
+			}
 		
 		} finally {
-		lock.unlock();
+			lock.unlock();
 		}
 	}
 	
@@ -208,5 +201,23 @@ public class Board {
 							String.join(" ", validColors));
 	}
 	
-	
+	public String getFullBoardState() {
+    	lock.lock();
+    	try {
+        	StringBuilder sb = new StringBuilder();
+        	// Get all notes
+        	for (Note note : notes) {
+            	sb.append(note.toProtocolString(isNotePinned(note))).append("\n");
+        	}
+        	// Get all pins
+        	for (Pin pin : pins) {
+            	sb.append(pin.toProtocol()).append("\n");
+        	}
+        	return sb.toString();
+    	} finally {
+        	lock.unlock();
+    	}
+	}
+
+
 }
