@@ -2,26 +2,6 @@
 
 A distributed client-server application implementing a networked bulletin board system using Java TCP sockets. Multiple concurrent clients can post, query, pin, and manage notes on a centralized server.
 
-## Table of Contents
-- [Features](#features)
-- [System Requirements](#system-requirements)
-- [Project Structure](#project-structure)
-- [Compilation Instructions](#compilation-instructions)
-- [Running the Application](#running-the-application)
-- [Usage Guide](#usage-guide)
-- [Protocol Commands](#protocol-commands)
-- [Troubleshooting](#troubleshooting)
-
-## Features
-
-- **Multi-threaded Server**: Supports multiple concurrent client connections
-- **Real-time Updates**: All clients see changes instantly via broadcasting
-- **Note Management**: Create, view, and manage colored notes on a virtual board
-- **Pin System**: Pin notes to preserve them during shake operations
-- **Atomic Operations**: SHAKE and CLEAR operations are atomic across all clients
-- **GUI Client**: Interactive graphical interface with zoom and pan capabilities
-- **Thread-safe**: Proper synchronization for concurrent operations
-
 ## System Requirements
 
 - **Java Development Kit (JDK)**: Version 8 or higher
@@ -99,11 +79,6 @@ java -cp bin server.BullitinBoardServer
 - Default Port: `8080`
 - Default Board: `800x600` pixels
 - Default Note Size: `50x50` pixels
-
-**Custom Configuration:**
-```bash
-java -cp bin server.BullitinBoardServer <port> <board_width> <board_height> <note_width> <note_height> <color1> <color2> ...
-```
 
 **Example:**
 ```bash
@@ -318,12 +293,10 @@ Colors can be customized when starting the server by providing color names as co
 ## Authors
 
 - Navin Sethi (ID: 169086962)
+- Abisan Vijayakaran ( 169044552)
 
 ## Assignment
 
-CP372 (Sections D & C) – Assignment 01  
+CP372 (Sections D ) – Assignment 01  
 Client–Server Bulletin Board System
-
 ---
-
-For additional help or questions, please refer to the assignment specification document or contact the course instructor.
